@@ -1,9 +1,14 @@
-use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
+use rltk::{GameState, Rltk, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
-use std::cmp::{max, min};
+mod map;
+pub use map::*;
+mod player;
+pub use player::*;
+mod rect;
+pub use rect::*;
 
-struct State {
+pub struct State {
     ecs: World,
 }
 impl GameState for State {
@@ -11,6 +16,8 @@ impl GameState for State {
         player_input(self, ctx);
         self.run_systems();
         ctx.cls();
+        let map = self.ecs.fetch::<Vec<TileType>>();
+        draw_map(&map, ctx);
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
         for (pos, render) in (&positions, &renderables).join() {
@@ -20,8 +27,6 @@ impl GameState for State {
 }
 impl State {
     fn run_systems(&mut self) {
-        let mut lw = LeftWalker {};
-        lw.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -39,60 +44,34 @@ struct Renderable {
     bg: RGB,
 }
 
-#[derive(Component)]
-struct LeftMover {}
-
-struct LeftWalker {}
-
-impl<'a> System<'a> for LeftWalker {
-    type SystemData = (ReadStorage<'a, LeftMover>, WriteStorage<'a, Position>);
-    fn run(&mut self, (lefty, mut pos): Self::SystemData) {
-        for (_lefty, pos) in (&lefty, &mut pos).join() {
-            pos.x -= 1;
-            if pos.x < 0 {
-                pos.x = 79;
-            }
-        }
-    }
-}
-
 #[derive(Component, Debug)]
 struct Player {}
 
-fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
-    let mut positions = ecs.write_storage::<Position>();
-    let mut players = ecs.write_storage::<Player>();
-    for (_player, pos) in (&mut players, &mut positions).join() {
-        pos.x = min(79, max(0, pos.x + dx));
-        pos.y = min(49, max(0, pos.y + dy));
-    }
-}
-
-fn player_input(gs: &mut State, ctx: &mut Rltk) {
-    match ctx.key {
-        None => {}
-        Some(key) => match key {
-            VirtualKeyCode::H => try_move_player(-1, 0, &mut gs.ecs),
-            VirtualKeyCode::L => try_move_player(1, 0, &mut gs.ecs),
-            VirtualKeyCode::K => try_move_player(0, -1, &mut gs.ecs),
-            VirtualKeyCode::J => try_move_player(0, 1, &mut gs.ecs),
-            _ => {}
-        },
-    }
-}
 fn main() -> rltk::BError {
+    // build context and game state
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
         .with_title("rusty roguelike tutorial")
         .build()?;
     let mut gs = State { ecs: World::new() };
+
+    // add Specs resources
+    let (rooms, map) = new_map_rooms_and_corridors();
+    gs.ecs.insert(map);
+    let (player_x, player_y) = rooms[0].center();
+
+    // register components
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
-    gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
+
+    // create entities
     gs.ecs
         .create_entity()
-        .with(Position { x: 40, y: 25 })
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::FORESTGREEN),
@@ -100,17 +79,7 @@ fn main() -> rltk::BError {
         })
         .with(Player {})
         .build();
-    for i in 0..10 {
-        gs.ecs
-            .create_entity()
-            .with(Position { x: i * 7, y: 20 })
-            .with(Renderable {
-                glyph: rltk::to_cp437('!'),
-                fg: RGB::named(rltk::VIOLETRED),
-                bg: RGB::named(rltk::BLACK),
-            })
-            .with(LeftMover {})
-            .build();
-    }
+
+    // start main loop
     rltk::main_loop(context, gs)
 }
