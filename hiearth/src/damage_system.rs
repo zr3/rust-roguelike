@@ -1,5 +1,5 @@
-use super::{CombatStats, Player, Renderable, RunState, SufferDamage};
-use rltk::{console, RGB};
+use super::{gamelog::GameLog, CombatStats, Player, Renderable, RunState, SufferDamage};
+use rltk::RGB;
 use specs::prelude::*;
 
 pub struct DamageSystem {}
@@ -45,7 +45,9 @@ pub fn delete_the_dead(ecs: &mut World) {
                         pr.glyph = rltk::to_cp437('X');
                         pr.fg = RGB::named(rltk::WHITE);
                         pr.bg = RGB::named(rltk::BLACK);
-                        console::log("RIP you");
+                        let mut log = ecs.fetch_mut::<GameLog>();
+                        log.entries.push("".to_string());
+                        log.entries.push("RIP you".to_string());
                     }
                 }
             }

@@ -1,5 +1,6 @@
-use rltk::{GameState, Point, Rltk, RGB};
+use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
+
 mod map;
 use map::*;
 mod player;
@@ -8,6 +9,12 @@ mod rect;
 use rect::*;
 mod components;
 use components::*;
+mod gamelog;
+mod gui;
+mod inventory_system;
+use inventory_system::*;
+mod spawner;
+
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 mod monster_ai_system;
@@ -25,6 +32,8 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    ShowInventory,
+    ShowDropItem,
     GameOver,
 }
 
@@ -43,6 +52,7 @@ impl GameState for State {
         match newrunstate {
             RunState::PreRun => {
                 self.run_systems();
+                self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::AwaitingInput => {
@@ -50,11 +60,55 @@ impl GameState for State {
             }
             RunState::PlayerTurn => {
                 self.run_systems();
+                self.ecs.maintain();
                 newrunstate = RunState::MonsterTurn;
             }
             RunState::MonsterTurn => {
                 self.run_systems();
+                self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
+            }
+            RunState::ShowInventory => {
+                let result = gui::show_inventory(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.expect(
+                            "show_inventory always should return entity with Selected response",
+                        );
+                        let mut intent = self.ecs.write_storage::<WantsToDrinkPotion>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDrinkPotion {
+                                    potion: item_entity,
+                                },
+                            )
+                            .expect("should be able to insert intent to drink potion for player");
+                        newrunstate = RunState::PlayerTurn;
+                    }
+                }
+            }
+            RunState::ShowDropItem => {
+                let result = gui::show_drop_item(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.expect(
+                            "show_drop_item always should return entity with Selected response",
+                        );
+                        let mut intent = self.ecs.write_storage::<WantsToDropItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDropItem { item: item_entity },
+                            )
+                            .expect("should be able to insert intent to drop item for player");
+                        newrunstate = RunState::PlayerTurn;
+                    }
+                }
             }
             RunState::GameOver => {}
         }
@@ -71,12 +125,16 @@ impl GameState for State {
         let renderables = self.ecs.read_storage::<Renderable>();
         let map = self.ecs.fetch::<Map>();
 
-        for (pos, render) in (&positions, &renderables).join() {
+        let mut sorted_renderables = (&positions, &renderables).join().collect::<Vec<_>>();
+        sorted_renderables.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+        for (pos, render) in sorted_renderables.iter() {
             let idx = map.xy_idx(pos.x, pos.y);
             if map.visible_tiles[idx] {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
+
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 impl State {
@@ -91,6 +149,12 @@ impl State {
         melee.run_now(&self.ecs);
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
+        let mut pickup = ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
+        let mut potions = DrinkPotionSystem {};
+        potions.run_now(&self.ecs);
+        let mut drop_items = ItemDropSystem {};
+        drop_items.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -100,6 +164,8 @@ fn main() -> rltk::BError {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
         .with_title("rusty roguelike tutorial")
+        .with_gutter(16)
+        .with_tile_dimensions(16, 16)
         .build()?;
     let mut gs = State { ecs: World::new() };
 
@@ -118,105 +184,33 @@ fn main() -> rltk::BError {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<Item>();
+    gs.ecs.register::<Potion>();
+    gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<WantsToDrinkPotion>();
+    gs.ecs.register::<WantsToDropItem>();
+
+    // add resources needed for entity spawning
+    gs.ecs.insert(rltk::RandomNumberGenerator::new());
 
     // create entities
     // .. player
-    let player_entity = gs
-        .ecs
-        .create_entity()
-        .with(Position {
-            x: player_x,
-            y: player_y,
-        })
-        .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::FORESTGREEN),
-            bg: RGB::named(rltk::BLACK),
-        })
-        .with(Player {})
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
-        })
-        .with(Name {
-            name: "WAZ".to_string(),
-        })
-        .with(CombatStats {
-            max_hp: 30,
-            hp: 30,
-            defense: 2,
-            power: 5,
-        })
-        .build();
+    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     // .. monsters
-    let mut rng = rltk::RandomNumberGenerator::new();
-    for (i, room) in map.rooms.iter().skip(1).enumerate() {
-        let (x, y) = room.center();
-
-        let glyph: rltk::FontCharType;
-        let fg: rltk::RGB;
-        let name: String;
-        let monster_roll = rng.roll_dice(1, 4);
-        let color_roll = rng.roll_dice(1, 2);
-        match monster_roll {
-            1 => {
-                name = "KOBOLD".to_string();
-                glyph = rltk::to_cp437('k');
-                fg = match color_roll {
-                    1 => RGB::from_u8(rng.range(0, 255), rng.range(0, 255), rng.range(0, 255)),
-                    _ => RGB::named(rltk::PURPLE),
-                }
-            }
-            2 => {
-                name = "MOSQUITO".to_string();
-                glyph = rltk::to_cp437('m');
-                fg = RGB::named(rltk::BROWN1);
-            }
-            3 => {
-                name = "SPIDER".to_string();
-                glyph = rltk::to_cp437('s');
-                fg = RGB::named(rltk::GREY);
-            }
-            _ => {
-                name = "GHOST".to_string();
-                glyph = rltk::to_cp437('g');
-                fg = RGB::named(rltk::MINT_CREAM);
-            }
-        }
-        gs.ecs
-            .create_entity()
-            .with(Position { x, y })
-            .with(Renderable {
-                glyph,
-                fg,
-                bg: RGB::named(rltk::BLACK),
-            })
-            .with(Viewshed {
-                visible_tiles: Vec::new(),
-                range: 8,
-                dirty: true,
-            })
-            .with(Monster {})
-            .with(Name {
-                name: format!("{} #{}", &name, i),
-            })
-            .with(BlocksTile {})
-            .with(CombatStats {
-                max_hp: 16,
-                hp: 16,
-                defense: 1,
-                power: 4,
-            })
-            .build();
+    for room in map.rooms.iter().skip(1) {
+        spawner::spawn_room(&mut gs.ecs, room);
     }
 
-    // add map to GameState resources
+    // add remaining resources
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["you find yourself in a dank af cave...".to_string()],
+    });
 
     // start main loop
     rltk::main_loop(context, gs)
