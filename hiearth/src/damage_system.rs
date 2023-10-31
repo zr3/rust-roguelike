@@ -1,3 +1,8 @@
+use crate::{
+    components::{Name, Position},
+    map::Map,
+};
+
 use super::{gamelog::GameLog, CombatStats, Player, Renderable, RunState, SufferDamage};
 use rltk::RGB;
 use specs::prelude::*;
@@ -8,13 +13,21 @@ impl<'a> System<'a> for DamageSystem {
     type SystemData = (
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
+        ReadStorage<'a, Position>,
+        WriteExpect<'a, Map>,
+        Entities<'a>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage) = data;
+        let (mut stats, mut damage, positions, mut map, entities) = data;
 
-        for (mut stats, damage) in (&mut stats, &damage).join() {
+        for (entity, mut stats, damage) in (&entities, &mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
+            let pos = positions.get(entity);
+            if let Some(pos) = pos {
+                let idx = map.xy_idx(pos.x, pos.y);
+                map.bloodstains.insert(idx);
+            }
         }
 
         damage.clear();
@@ -29,9 +42,17 @@ pub fn delete_the_dead(ecs: &mut World) {
         let entities = ecs.entities();
         for (entity, stats) in (&entities, &combat_stats).join() {
             if stats.hp < 1 {
+                let names = ecs.read_storage::<Name>();
                 let player = players.get(entity);
                 match player {
-                    None => dead.push(entity),
+                    None => {
+                        let victim_name = names.get(entity);
+                        let mut log = ecs.fetch_mut::<GameLog>();
+                        if let Some(victim_name) = victim_name {
+                            log.entries.push(format!("{} is dead", &victim_name.name));
+                        }
+                        dead.push(entity)
+                    }
                     Some(_) => {
                         let mut runwriter = ecs.write_resource::<RunState>();
                         if *runwriter == RunState::GameOver {

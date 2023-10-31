@@ -1,3 +1,8 @@
+use crate::{
+    components::{HungerClock, HungerState, Monster},
+    map::TileType,
+};
+
 use super::{
     gamelog::GameLog, CombatStats, Item, Map, Player, Position, RunState, State, Viewshed,
     WantsToMelee, WantsToPickupItem,
@@ -70,11 +75,79 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::G => get_item(&mut gs.ecs),
             VirtualKeyCode::I => return RunState::ShowInventory,
             VirtualKeyCode::D => return RunState::ShowDropItem,
+            VirtualKeyCode::R => return RunState::ShowRemoveItem,
+
+            VirtualKeyCode::Escape => return RunState::SaveGame,
+
+            VirtualKeyCode::Period => {
+                if try_next_level(&mut gs.ecs) {
+                    return RunState::NextLevel;
+                }
+            }
+
+            VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
+                skip_turn(&mut gs.ecs);
+            }
 
             _ => return RunState::AwaitingInput,
         },
     }
     RunState::PlayerTurn
+}
+
+fn skip_turn(ecs: &mut World) -> RunState {
+    let player_entity = ecs.fetch::<Entity>();
+    let viewshed_components = ecs.read_storage::<Viewshed>();
+    let monsters = ecs.read_storage::<Monster>();
+
+    let worldmap_resource = ecs.fetch::<Map>();
+
+    let mut can_heal = true;
+    let viewshed = viewshed_components
+        .get(*player_entity)
+        .expect("player should have viewshed");
+    for tile in viewshed.visible_tiles.iter() {
+        let idx = worldmap_resource.xy_idx(tile.x, tile.y);
+        for entity_id in worldmap_resource.tile_content[idx].iter() {
+            let mob = monsters.get(*entity_id);
+            if let Some(_) = mob {
+                can_heal = false;
+            }
+        }
+    }
+    let hunger_clocks = ecs.read_storage::<HungerClock>();
+    let hc = hunger_clocks.get(*player_entity);
+    if let Some(hc) = hc {
+        match hc.state {
+            HungerState::Hungry | HungerState::Starving => can_heal = false,
+            _ => {}
+        }
+    }
+
+    if can_heal {
+        let mut health_components = ecs.write_storage::<CombatStats>();
+        let player_hp = health_components
+            .get_mut(*player_entity)
+            .expect("player should have hp");
+        player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
+    }
+
+    RunState::PlayerTurn
+}
+
+fn try_next_level(ecs: &mut World) -> bool {
+    let player_pos = ecs.fetch::<Point>();
+    let map = ecs.fetch::<Map>();
+    let player_idx = map.xy_idx(player_pos.x, player_pos.y);
+    if map.tiles[player_idx] == TileType::DownStairs {
+        true
+    } else {
+        let mut gamelog = ecs.fetch_mut::<GameLog>();
+        gamelog
+            .entries
+            .push("there are no stairs here...".to_string());
+        false
+    }
 }
 
 fn get_item(ecs: &mut World) {
