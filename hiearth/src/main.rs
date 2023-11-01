@@ -19,6 +19,7 @@ mod hunger_system;
 mod menu;
 mod particle_system;
 mod random_table;
+mod rex_assets;
 mod saveload_system;
 mod spawner;
 
@@ -526,6 +527,7 @@ fn main() -> rltk::BError {
         entries: vec!["you find yourself in a dank af cave...".to_string()],
     });
     gs.ecs.insert(particle_system::ParticleBuilder::new());
+    gs.ecs.insert(rex_assets::RexAssets::new());
 
     // start main loop
     rltk::main_loop(context, gs)

@@ -2,12 +2,15 @@ use rltk::{Rltk, VirtualKeyCode, RGB};
 
 use crate::{
     gui::{MainMenuResult, MainMenuSelection},
+    rex_assets::RexAssets,
     RunState, State,
 };
 
 pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
     let save_exists = super::saveload_system::does_save_exist();
     let runstate = gs.ecs.fetch::<RunState>();
+    let assets = gs.ecs.fetch::<RexAssets>();
+    ctx.render_xp_sprite(&assets.menu, 0, 0);
 
     ctx.print_color_centered(
         15,
