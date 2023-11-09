@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use crate::components::{
-    AreaOfEffect, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, HungerClock,
-    InflictsDamage, MagicMapper, MeleePowerBonus, ProvidesFood, ProvidesHealing, Ranged,
-    SerializeMe,
+    AreaOfEffect, Confusion, Consumable, DefenseBonus, EntryTrigger, EquipmentSlot, Equippable,
+    Hidden, HungerClock, InflictsDamage, MagicMapper, MeleePowerBonus, ProvidesFood,
+    ProvidesHealing, Ranged, SerializeMe, SingleActivation,
 };
 use crate::random_table::RandomTable;
 
@@ -60,6 +60,7 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
             "TOWER SHIELD" => tower_shield(ecs, x, y),
             "FRENCH FRIES" => rations(ecs, x, y),
             "SCROLL of MAGIC MAPPING" => magic_mapping_scroll(ecs, x, y),
+            "BEAR TRAP" => bear_trap(ecs, x, y),
             _ => {}
         }
     }
@@ -276,6 +277,7 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("TOWER SHIELD", map_depth - 1)
         .add("FRENCH FRIES", 10)
         .add("SCROLL of MAGIC MAPPING", 2)
+        .add("BEAR TRAP", 100)
 }
 
 fn dagger(ecs: &mut World, x: i32, y: i32) {
@@ -396,6 +398,26 @@ fn magic_mapping_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(MagicMapper {})
         .with(Consumable {})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn bear_trap(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('^'),
+            fg: RGB::named(rltk::ORANGE_RED),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "BEAR TRAP".to_string(),
+        })
+        .with(Hidden {})
+        .with(EntryTrigger {})
+        .with(InflictsDamage { damage: 6 })
+        .with(SingleActivation {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

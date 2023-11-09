@@ -1,5 +1,5 @@
 use crate::{
-    components::{HungerClock, HungerState, Monster},
+    components::{EntityMoved, HungerClock, HungerState, Monster},
     map::TileType,
 };
 
@@ -18,6 +18,7 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
     let map = ecs.fetch::<Map>();
     let entities = ecs.entities();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
+    let mut entity_moved = ecs.write_storage::<EntityMoved>();
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
@@ -46,6 +47,9 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
             let mut ppos = ecs.write_resource::<Point>();
             ppos.x = pos.x;
             ppos.y = pos.y;
+            entity_moved
+                .insert(entity, EntityMoved {})
+                .expect("should be able to add movement marker");
         }
     }
 }

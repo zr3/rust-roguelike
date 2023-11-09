@@ -337,7 +337,7 @@ impl<'a> System<'a> for UseItemSystem {
 
             // magic mapping items
             let item_maps = magic_mapper.get(used_item.item);
-            if let Some(item_maps) = item_maps {
+            if let Some(_item_maps) = item_maps {
                 gamelog
                     .entries
                     .push(format!("YOU read a MAP of this level!"));
@@ -357,13 +357,6 @@ impl<'a> System<'a> for UseItemSystem {
                         rltk::to_cp437('!'),
                         2000.0,
                     );
-                }
-            }
-            match item_maps {
-                None => {}
-                Some(_) => {
-                    let target = targets[0];
-                    let hc = hunger_clocks.get_mut(target);
                 }
             }
 
