@@ -15,3 +15,7 @@ Cargo.lock
 
 # game runtime artifacts
 savegame.json
+
+# wasm
+wasm/*
+!wasm/index.html

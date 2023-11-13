@@ -16,7 +16,7 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
         15,
         RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
-        "a rusty roguelike adventure",
+        "And We Had a Wild Thyme",
     );
 
     if let RunState::MainMenu {

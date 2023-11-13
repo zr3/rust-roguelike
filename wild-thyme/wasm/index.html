@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width" />
+    <title>And We Had a Wild Thyme</title>
+  </head>
+  <body>
+<style>
+:root {
+    --color-dark: #181818;
+}
+body {
+    background-color: var(--color-dark);
+    margin: 0;
+}
+#game-window {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    transition: all 0.2s ease-out;
+    filter: opacity(1);
+}
+#canvas {
+    box-shadow: 0px 10px 40px #000;
+}
+</style>
+        <section id="game-window">
+            <canvas id="canvas" width="1280" height="800"></canvas>
+        </section>
+    <script src="./and_we_had_a_wild_thyme.js"></script>
+    <script>
+      window.addEventListener("load", async () => {
+        await wasm_bindgen("./and_we_had_a_wild_thyme_bg.wasm");
+      });
+    </script>
+  </body>
+</html>
+
