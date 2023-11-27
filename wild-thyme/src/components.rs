@@ -1,4 +1,4 @@
-use rltk::RGB;
+use rltk::{Point, RGB};
 use serde::{Deserialize, Serialize};
 use specs::error::NoError;
 use specs::prelude::*;
@@ -31,6 +31,20 @@ pub struct Viewshed {
 
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Monster {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Herbivore {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct HostileToPlayer {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Creature {}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct DropsLoot {
+    pub item: Entity,
+}
 
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct Name {
@@ -129,6 +143,25 @@ pub struct Confusion {
     pub turns: i32,
 }
 
+impl Confusion {
+    pub fn new_confusion(store: &mut WriteStorage<Confusion>, victim: Entity, amount: i32) {
+        if let Some(suffering) = store.get_mut(victim) {
+            suffering.turns += amount;
+        } else {
+            let confused = Confusion { turns: amount };
+            store
+                .insert(victim, confused)
+                .expect("should be able to insert confused status");
+        }
+    }
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct SpawnsMobs {
+    pub mob_type: String,
+    pub num_mobs: i32,
+}
+
 pub struct SerializeMe;
 
 #[derive(Component, Serialize, Deserialize, Clone)]
@@ -192,10 +225,17 @@ pub struct MagicMapper {}
 pub struct Hidden {}
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
-pub struct EntryTrigger {}
+pub struct EntryTrigger {
+    pub verb: String,
+}
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct EntityMoved {}
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct SingleActivation {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Fog {
+    pub lifetime_rounds: i32,
+}

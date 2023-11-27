@@ -1,13 +1,17 @@
+use std::cmp;
+
+use rltk::RandomNumberGenerator;
 use specs::prelude::*;
 
 use crate::{
     components::{
-        EntityMoved, EntryTrigger, Hidden, InflictsDamage, Name, Position, SingleActivation,
-        SufferDamage,
+        Confusion, EntityMoved, EntryTrigger, Hidden, InflictsDamage, Name, Position,
+        SingleActivation, SpawnsMobs, SufferDamage,
     },
     gamelog::GameLog,
     map::Map,
     particle_system::ParticleBuilder,
+    spawn_system::SpawnBuilder,
 };
 
 pub struct TriggerSystem {}
@@ -26,6 +30,10 @@ impl<'a> System<'a> for TriggerSystem {
         WriteStorage<'a, SufferDamage>,
         WriteExpect<'a, ParticleBuilder>,
         ReadStorage<'a, SingleActivation>,
+        WriteStorage<'a, Confusion>,
+        ReadStorage<'a, SpawnsMobs>,
+        WriteExpect<'a, SpawnBuilder>,
+        WriteExpect<'a, RandomNumberGenerator>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -42,6 +50,10 @@ impl<'a> System<'a> for TriggerSystem {
             mut suffer_damage,
             mut particle_builder,
             single_activation,
+            mut confusion,
+            spawns_mobs,
+            mut spawn_builder,
+            mut rng,
         ) = data;
 
         let mut remove_entities: Vec<Entity> = Vec::new();
@@ -49,9 +61,10 @@ impl<'a> System<'a> for TriggerSystem {
             let idx = map.xy_idx(pos.x, pos.y);
             for entity_id in map.tile_content[idx].iter() {
                 if entity != *entity_id {
-                    if let Some(_trigger) = entry_trigger.get(*entity_id) {
+                    if let Some(trigger) = entry_trigger.get(*entity_id) {
                         if let Some(name) = names.get(*entity_id) {
-                            log.entries.push(format!("{} triggers!", &name.name));
+                            log.entries
+                                .push(format!("{} {}!", &name.name, &trigger.verb));
                         }
 
                         hidden.remove(*entity_id);
@@ -69,6 +82,69 @@ impl<'a> System<'a> for TriggerSystem {
                             SufferDamage::new_damage(&mut suffer_damage, entity, damage.damage);
                         }
 
+                        // inflict confusion if needed
+                        let mut turns = 0;
+                        if let Some(confused) = confusion.get(*entity_id) {
+                            turns = confused.turns;
+                        }
+                        if turns > 0 {
+                            particle_builder.request(
+                                pos.x,
+                                pos.y,
+                                rltk::RGB::named(rltk::ORANGE),
+                                rltk::RGB::named(rltk::BLACK),
+                                rltk::to_cp437('?'),
+                                200.0,
+                            );
+
+                            Confusion::new_confusion(&mut confusion, entity, turns);
+                        }
+
+                        // spawn things if needed
+                        if let Some(spawns_mobs) = spawns_mobs.get(*entity_id) {
+                            particle_builder.request(
+                                pos.x,
+                                pos.y,
+                                rltk::RGB::named(rltk::ORANGE),
+                                rltk::RGB::named(rltk::BLACK),
+                                rltk::to_cp437('‼'),
+                                200.0,
+                            );
+
+                            let mut spawn_points = Vec::new();
+                            for nx in cmp::max(0, pos.x - 2)..cmp::min(map.width - 1, pos.x + 2) {
+                                for ny in
+                                    cmp::max(0, pos.y - 2)..cmp::min(map.height - 1, pos.y + 2)
+                                {
+                                    if !map.blocked[map.xy_idx(nx, ny)] {
+                                        spawn_points.push((nx, ny));
+                                    }
+                                }
+                            }
+                            log.entries
+                                .push(format!("spawner triggers at {}, {}!", pos.x, pos.y));
+                            for _ in 0..spawns_mobs.num_mobs {
+                                if let Some(idx) = rng.random_slice_index(&spawn_points) {
+                                    let (x, y) = spawn_points[idx];
+                                    spawn_builder.request(x, y, spawns_mobs.mob_type.clone());
+                                    particle_builder.request(
+                                        x,
+                                        y,
+                                        rltk::RGB::named(rltk::ORANGE),
+                                        rltk::RGB::named(rltk::BLACK),
+                                        rltk::to_cp437('‼'),
+                                        200.0,
+                                    );
+                                    spawn_points.remove(idx);
+                                    log.entries.push(format!(
+                                        "{} appears at {}, {}!",
+                                        &spawns_mobs.mob_type, x, y
+                                    ));
+                                }
+                            }
+                        }
+
+                        // single activation
                         if let Some(_sa) = single_activation.get(*entity_id) {
                             remove_entities.push(*entity_id);
                         }

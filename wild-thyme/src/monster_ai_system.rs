@@ -1,10 +1,10 @@
 use crate::{
-    components::{Confusion, EntityMoved},
+    components::{Confusion, EntityMoved, HostileToPlayer},
     particle_system::ParticleBuilder,
 };
 
 use super::{Map, Monster, Position, RunState, Viewshed, WantsToMelee};
-use rltk::Point;
+use rltk::{Point, RandomNumberGenerator};
 use specs::prelude::*;
 
 pub struct MonsterAI {}
@@ -23,6 +23,8 @@ impl<'a> System<'a> for MonsterAI {
         WriteStorage<'a, Confusion>,
         WriteExpect<'a, ParticleBuilder>,
         WriteStorage<'a, EntityMoved>,
+        ReadStorage<'a, HostileToPlayer>,
+        WriteExpect<'a, RandomNumberGenerator>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -39,6 +41,8 @@ impl<'a> System<'a> for MonsterAI {
             mut confused,
             mut particle_builder,
             mut entity_moved,
+            hostile,
+            mut rng,
         ) = data;
 
         if *runstate != RunState::MonsterTurn {
@@ -68,9 +72,14 @@ impl<'a> System<'a> for MonsterAI {
                 );
             }
 
-            if can_act {
-                let distance =
-                    rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+            if !can_act {
+                continue;
+            }
+
+            let distance =
+                rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+            if let Some(_) = hostile.get(entity) {
+                // if hostile, move close and attack
                 if distance < 1.5 {
                     wants_to_melee
                         .insert(
@@ -93,6 +102,26 @@ impl<'a> System<'a> for MonsterAI {
                         pos.y = path.steps[1] as i32 / map.width;
                         idx = map.xy_idx(pos.x, pos.y);
                         map.blocked[idx] = true;
+                        viewshed.dirty = true;
+                        entity_moved
+                            .insert(entity, EntityMoved {})
+                            .expect("should be able to add movement marker");
+                    }
+                }
+            } else {
+                // if not hostile, just wander
+                if distance > 2. {
+                    let new_pos = (
+                        pos.x + rng.roll_dice(1, 3) - 2,
+                        pos.y + rng.roll_dice(1, 3) - 2,
+                    );
+                    let new_pos_idx = map.xy_idx(new_pos.0, new_pos.1);
+                    if !map.blocked[new_pos_idx] {
+                        let old_pos_idx = map.xy_idx(pos.x, pos.y);
+                        map.blocked[old_pos_idx] = false;
+                        pos.x = new_pos.0;
+                        pos.y = new_pos.1;
+                        map.blocked[new_pos_idx] = true;
                         viewshed.dirty = true;
                         entity_moved
                             .insert(entity, EntityMoved {})

@@ -527,7 +527,7 @@ pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
         15,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "YOU DIED!!",
+        "AH YOU DIED!!",
     );
     ctx.print_color_centered(
         17,
@@ -540,11 +540,12 @@ pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
         20,
         RGB::named(rltk::MAGENTA),
         RGB::named(rltk::BLACK),
-        "PRESS THE ANY KEY",
+        "PRESS [ENTER]",
     );
 
     match ctx.key {
         None => GameOverResult::NoSelection,
-        Some(_) => GameOverResult::QuitToMenu,
+        Some(rltk::VirtualKeyCode::Return) => GameOverResult::QuitToMenu,
+        Some(_) => GameOverResult::NoSelection,
     }
 }

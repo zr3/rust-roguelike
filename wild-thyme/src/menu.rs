@@ -85,7 +85,13 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
                     match selection {
                         MainMenuSelection::NewGame => newselection = MainMenuSelection::Quit,
                         MainMenuSelection::LoadGame => newselection = MainMenuSelection::NewGame,
-                        MainMenuSelection::Quit => newselection = MainMenuSelection::LoadGame,
+                        MainMenuSelection::Quit => {
+                            if save_exists {
+                                newselection = MainMenuSelection::LoadGame;
+                            } else {
+                                newselection = MainMenuSelection::NewGame;
+                            }
+                        }
                     }
                     return MainMenuResult::NoSelection {
                         selected: newselection,
@@ -94,7 +100,13 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
                 VirtualKeyCode::Down | VirtualKeyCode::J => {
                     let newselection;
                     match selection {
-                        MainMenuSelection::NewGame => newselection = MainMenuSelection::LoadGame,
+                        MainMenuSelection::NewGame => {
+                            if save_exists {
+                                newselection = MainMenuSelection::LoadGame;
+                            } else {
+                                newselection = MainMenuSelection::Quit;
+                            }
+                        }
                         MainMenuSelection::LoadGame => newselection = MainMenuSelection::Quit,
                         MainMenuSelection::Quit => newselection = MainMenuSelection::NewGame,
                     }

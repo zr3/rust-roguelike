@@ -1,5 +1,5 @@
 use super::{Entity, Rect, World};
-use rltk::{Algorithm2D, BaseMap, Point, Rltk, RGB};
+use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -83,25 +83,32 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
             let mut fg;
             match tile {
                 TileType::Floor => {
-                    fg = RGB::from_f32(0., 0.2, 0.2);
+                    fg = RGB::from_hex("#39441b").expect("hardcoded");
                     glyph = rltk::to_cp437('.');
                 }
                 TileType::Wall => {
-                    fg = RGB::from_f32(0., 0.15, 0.3);
-                    glyph = wall_glyph(&*map, x, y);
+                    fg = RGB::from_hex("#39561b").expect("hardcoded");
+                    glyph = rltk::to_cp437('♣'); // wall_glyph(&*map, x, y);
                 }
                 TileType::DownStairs => {
-                    glyph = rltk::to_cp437('>');
-                    fg = RGB::named(rltk::LIGHTPINK);
+                    fg = RGB::from_hex("#bf9aca").expect("hardcoded");
+                    glyph = rltk::to_cp437('Ö');
                 }
             }
             if map.bloodstains.contains(&idx) {
-                fg = RGB::named(rltk::CRIMSON);
+                fg = RGB::from_hex("#cc3f0c").expect("hardcoded");
             }
             if !map.visible_tiles[idx] {
                 fg = fg.to_greyscale()
             }
-            ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+            ctx.set(
+                x,
+                y,
+                fg,
+                RGB::from_hex("#000000").expect("hardcoded"),
+                // RGB::from_hex("#222211").expect("hardcoded"),
+                glyph,
+            );
         }
         x += 1;
         if x > map.width - 1 {

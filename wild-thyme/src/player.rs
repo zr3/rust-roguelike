@@ -1,6 +1,7 @@
 use crate::{
-    components::{EntityMoved, HungerClock, HungerState, Monster},
+    components::{Confusion, EntityMoved, HungerClock, HungerState, Monster},
     map::TileType,
+    particle_system::ParticleBuilder,
 };
 
 use super::{
@@ -19,10 +20,34 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
     let entities = ecs.entities();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
     let mut entity_moved = ecs.write_storage::<EntityMoved>();
+    let mut confused = ecs.write_storage::<Confusion>();
+    let mut particle_builder = ecs.fetch_mut::<ParticleBuilder>();
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
     {
+        if let Some(i_am_confused) = confused.get_mut(entity) {
+            i_am_confused.turns -= 1;
+            if i_am_confused.turns < 1 {
+                confused.remove(entity);
+            }
+
+            particle_builder.request(
+                pos.x,
+                pos.y,
+                rltk::RGB::named(rltk::PURPLE),
+                rltk::RGB::named(rltk::BLACK),
+                rltk::to_cp437('?'),
+                200.0,
+            );
+
+            let mut gamelog = ecs.fetch_mut::<GameLog>();
+            gamelog
+                .entries
+                .push("YOU are CONFUSED and cannot move!".to_string());
+            continue;
+        }
+
         let destination_idx = map.xy_idx(pos.x + dx, pos.y + dy);
 
         for potential_target in map.tile_content[destination_idx].iter() {
@@ -76,21 +101,22 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad3 | VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
             VirtualKeyCode::Numpad1 | VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
 
-            VirtualKeyCode::G => get_item(&mut gs.ecs),
             VirtualKeyCode::I => return RunState::ShowInventory,
             VirtualKeyCode::D => return RunState::ShowDropItem,
             VirtualKeyCode::R => return RunState::ShowRemoveItem,
 
             VirtualKeyCode::Escape => return RunState::SaveGame,
 
-            VirtualKeyCode::Period => {
-                if try_next_level(&mut gs.ecs) {
-                    return RunState::NextLevel;
-                }
-            }
+            VirtualKeyCode::Period => {}
 
             VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
-                skip_turn(&mut gs.ecs);
+                if !get_item(&mut gs.ecs) {
+                    if try_next_level(&mut gs.ecs) {
+                        return RunState::NextLevel;
+                    } else {
+                        skip_turn(&mut gs.ecs);
+                    }
+                }
             }
 
             _ => return RunState::AwaitingInput,
@@ -143,24 +169,15 @@ fn try_next_level(ecs: &mut World) -> bool {
     let player_pos = ecs.fetch::<Point>();
     let map = ecs.fetch::<Map>();
     let player_idx = map.xy_idx(player_pos.x, player_pos.y);
-    if map.tiles[player_idx] == TileType::DownStairs {
-        true
-    } else {
-        let mut gamelog = ecs.fetch_mut::<GameLog>();
-        gamelog
-            .entries
-            .push("there are no stairs here...".to_string());
-        false
-    }
+    map.tiles[player_idx] == TileType::DownStairs
 }
 
-fn get_item(ecs: &mut World) {
+fn get_item(ecs: &mut World) -> bool {
     let player_pos = ecs.fetch::<Point>();
     let player_entity = ecs.fetch::<Entity>();
     let entities = ecs.entities();
     let items = ecs.read_storage::<Item>();
     let positions = ecs.read_storage::<Position>();
-    let mut gamelog = ecs.fetch_mut::<GameLog>();
 
     let mut target_item: Option<Entity> = None;
     for (item_entity, _item, position) in (&entities, &items, &positions).join() {
@@ -169,21 +186,19 @@ fn get_item(ecs: &mut World) {
         }
     }
 
-    match target_item {
-        None => gamelog
-            .entries
-            .push("YOU look down, but there's nothing to pick up.".to_string()),
-        Some(item) => {
-            let mut pickup = ecs.write_storage::<WantsToPickupItem>();
-            pickup
-                .insert(
-                    *player_entity,
-                    WantsToPickupItem {
-                        collected_by: *player_entity,
-                        item,
-                    },
-                )
-                .expect("should be able to insert WantsToPickupItem for player");
-        }
+    if let Some(item) = target_item {
+        let mut pickup = ecs.write_storage::<WantsToPickupItem>();
+        pickup
+            .insert(
+                *player_entity,
+                WantsToPickupItem {
+                    collected_by: *player_entity,
+                    item,
+                },
+            )
+            .expect("should be able to insert WantsToPickupItem for player");
+        return true;
+    } else {
+        return false;
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    components::{Name, Position},
+    components::{DropsLoot, Name, Position, WantsToDropItem},
     map::Map,
 };
 
@@ -16,10 +16,13 @@ impl<'a> System<'a> for DamageSystem {
         ReadStorage<'a, Position>,
         WriteExpect<'a, Map>,
         Entities<'a>,
+        ReadStorage<'a, DropsLoot>,
+        WriteStorage<'a, WantsToDropItem>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage, positions, mut map, entities) = data;
+        let (mut stats, mut damage, positions, mut map, entities, drops_loot, mut wants_to_drop) =
+            data;
 
         for (entity, mut stats, damage) in (&entities, &mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
@@ -27,6 +30,11 @@ impl<'a> System<'a> for DamageSystem {
             if let Some(pos) = pos {
                 let idx = map.xy_idx(pos.x, pos.y);
                 map.bloodstains.insert(idx);
+            }
+            if stats.hp <= 0 {
+                if let Some(loot) = drops_loot.get(entity) {
+                    wants_to_drop.insert(entity, WantsToDropItem { item: loot.item });
+                }
             }
         }
 

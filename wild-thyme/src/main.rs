@@ -1,5 +1,6 @@
 use hunger_system::HungerSystem;
 use rltk::{GameState, Point, Rltk};
+use spawn_system::{SpawnBuilder, SpawnRequest};
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
 
@@ -15,12 +16,14 @@ mod gamelog;
 mod gui;
 mod inventory_system;
 use inventory_system::*;
+mod fog;
 mod hunger_system;
 mod menu;
 mod particle_system;
 mod random_table;
 mod rex_assets;
 mod saveload_system;
+mod spawn_system;
 mod spawner;
 mod trigger_system;
 
@@ -43,6 +46,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    PostTurn,
     ShowInventory,
     ShowDropItem,
     ShowRemoveItem,
@@ -105,6 +109,7 @@ impl GameState for State {
         match newrunstate {
             RunState::PreRun => {
                 self.run_systems();
+                // respawn_fog(&mut self.ecs);
                 self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
@@ -124,6 +129,36 @@ impl GameState for State {
             }
             RunState::MonsterTurn => {
                 self.run_systems();
+                self.ecs.maintain();
+                newrunstate = RunState::PostTurn;
+            }
+            RunState::PostTurn => {
+                self.run_systems();
+                let mut requests = Vec::new();
+                {
+                    let sb = self.ecs.fetch::<SpawnBuilder>();
+                    for new_spawn in sb.requests.iter() {
+                        requests.push(SpawnRequest {
+                            x: new_spawn.x,
+                            y: new_spawn.y,
+                            spawn_name: new_spawn.spawn_name.clone(),
+                        });
+                    }
+                }
+                for new_spawn in requests {
+                    spawner::spawn_specific_on_point(
+                        &mut self.ecs,
+                        (new_spawn.x, new_spawn.y),
+                        &new_spawn.spawn_name,
+                    );
+                }
+                {
+                    let sb = self
+                        .ecs
+                        .get_mut::<SpawnBuilder>()
+                        .expect("SpawnBuilder should be permanently registered");
+                    sb.requests.clear();
+                }
                 self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
@@ -320,6 +355,8 @@ impl State {
         remove_items.run_now(&self.ecs);
         let mut hunger = HungerSystem {};
         hunger.run_now(&self.ecs);
+        // let mut fog = fog::FogSystem {};
+        // fog.run_now(&self.ecs);
         let mut particles = particle_system::ParticleSpawnSystem {};
         particles.run_now(&self.ecs);
 
@@ -383,7 +420,7 @@ impl State {
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
         gamelog
             .entries
-            .push("YOU climb down the stairs, and rest for a few minutes...".to_string());
+            .push("YOU pass through the forest portal! and rest for a few minutes...".to_string());
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
@@ -403,6 +440,21 @@ impl State {
                 .expect("should be able to delete anything");
         }
 
+        self.reset_game();
+    }
+
+    fn reset_game(&mut self) {
+        let player_entity = spawner::player(&mut self.ecs, 0, 0);
+        self.ecs.insert(player_entity);
+        self.ecs.insert(Map::new(1));
+        self.ecs.insert(Point::new(0, 0));
+        self.ecs.insert(RunState::MainMenu {
+            menu_selection: { gui::MainMenuSelection::NewGame },
+        });
+        self.ecs.insert(particle_system::ParticleBuilder::new());
+        self.ecs.insert(gamelog::GameLog {
+            entries: vec!["you find yourself in a dark af forest...".to_string()],
+        });
         self.generate_world_map(1);
     }
 
@@ -486,27 +538,23 @@ fn main() -> rltk::BError {
     gs.ecs.register::<EntryTrigger>();
     gs.ecs.register::<EntityMoved>();
     gs.ecs.register::<SingleActivation>();
+    gs.ecs.register::<Fog>();
+    gs.ecs.register::<Creature>();
+    gs.ecs.register::<Herbivore>();
+    gs.ecs.register::<HostileToPlayer>();
+    gs.ecs.register::<DropsLoot>();
+    gs.ecs.register::<SpawnsMobs>();
     // new component register here
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
     // add resources
-    let player_entity = spawner::player(&mut gs.ecs, 0, 0);
-    gs.ecs.insert(player_entity);
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
-    gs.ecs.insert(Map::new(1));
-    gs.ecs.insert(Point::new(0, 0));
-    gs.ecs.insert(RunState::MainMenu {
-        menu_selection: { gui::MainMenuSelection::NewGame },
-    });
-    gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["you find yourself in a dank af cave...".to_string()],
-    });
-    gs.ecs.insert(particle_system::ParticleBuilder::new());
+    gs.ecs.insert(spawn_system::SpawnBuilder::new());
     gs.ecs.insert(rex_assets::RexAssets::new());
 
     // build the first level
-    gs.generate_world_map(1);
+    gs.reset_game();
 
     // start main loop
     rltk::main_loop(context, gs)

@@ -79,7 +79,13 @@ pub fn save_game(ecs: &mut World) {
             Hidden,
             EntryTrigger,
             EntityMoved,
-            SingleActivation // new component register here
+            SingleActivation,
+            Fog,
+            Creature,
+            Herbivore,
+            HostileToPlayer,
+            DropsLoot,
+            SpawnsMobs // new component register here
         );
     }
 
@@ -170,7 +176,13 @@ pub fn load_game(ecs: &mut World) {
             Hidden,
             EntryTrigger,
             EntityMoved,
-            SingleActivation // new component register here
+            SingleActivation,
+            Fog,
+            Creature,
+            Herbivore,
+            HostileToPlayer,
+            DropsLoot,
+            SpawnsMobs // new component register here
         );
     }
 
