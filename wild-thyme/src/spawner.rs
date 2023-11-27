@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::components::{
     AreaOfEffect, Confusion, Consumable, Creature, DefenseBonus, DropsLoot, EntryTrigger,
     EquipmentSlot, Equippable, Herbivore, Hidden, HostileToPlayer, HungerClock, InBackpack,
-    InflictsDamage, MagicMapper, MeleePowerBonus, ProvidesFood, ProvidesHealing, Ranged,
-    SerializeMe, SingleActivation, SpawnsMobs,
+    InflictsDamage, MagicMapper, MeleePowerBonus, ProvidesFood, ProvidesHealing, Quips, Ranged,
+    SerializeMe, SingleActivation, SpawnsMobs, TeleportsPlayer,
 };
 use crate::random_table::RandomTable;
 
@@ -64,12 +64,13 @@ pub fn spawn_specific_on_point(ecs: &mut World, point: (i32, i32), spawnable: &S
     let y = point.1;
     match spawnable.as_ref() {
         "FRIENDLY CROW" => friendly_crow(ecs, x, y),
-        "FRIENDLY EAGLE" => {} // teleport to town
+        "FRIENDLY EAGLE" => friendly_eagle(ecs, x, y),
 
         "HEALING HERBS" => healing_herbs(ecs, x, y),
         "GOODBERRY" => goodberry(ecs, x, y),
-        "THYME" => thyme(ecs, x, y),
+        "GOOD THYME" => thyme(ecs, x, y),
         "WEIRD CONFUSING POWDER" => confusion_scroll(ecs, x, y),
+        "SPARKLING POWDER" => fireball_scroll(ecs, x, y),
 
         "BEAR TRAP" => bear_trap(ecs, x, y),
         "PITFALL" => pitfall(ecs, x, y),
@@ -82,11 +83,11 @@ pub fn spawn_specific_on_point(ecs: &mut World, point: (i32, i32), spawnable: &S
 
         "ROCK" => rock(ecs, x, y),
 
-        "PUFFER MUSHROOM" => mushroom(ecs, x, y, "PUFFER".to_string()),
-        "MAGIC MUSHROOM" => mushroom(ecs, x, y, "MAGIC".to_string()),
-        "MOREL MUSHROOM" => mushroom(ecs, x, y, "MOREL".to_string()),
+        "PUFFER MUSHROOM" => mushroom(ecs, x, y, "PUFFER".to_string(), 1, 5),
+        "MYSTERIOUS MUSHROOM" => mushroom(ecs, x, y, "MAGIC".to_string(), -15, 40),
+        "MOREL MUSHROOM" => mushroom(ecs, x, y, "MOREL".to_string(), 10, 15),
 
-        "BERRY BUSH" => {}
+        "BERRY BUSH" => berry_bush(ecs, x, y),
 
         "BIRD NEST" => bird_nest(ecs, x, y),
         "SPARROW" => sparrow(ecs, x, y),
@@ -136,7 +137,7 @@ pub fn spawn_treeportal(ecs: &mut World, room: &Rect) {
             y: center.1,
         })
         .with(Name {
-            name: "MYSTERIOUS PORTAL".to_string(),
+            name: "TREE PORTAL".to_string(),
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -304,6 +305,42 @@ fn monster<S: ToString>(
             hp,
             defense,
             power,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+pub fn npc<S: ToString>(
+    ecs: &mut World,
+    x: i32,
+    y: i32,
+    glyph: rltk::FontCharType,
+    fg: rltk::RGB,
+    name: S,
+    quips: Vec<String>,
+) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Monster {})
+        .with(Renderable {
+            glyph,
+            fg,
+            bg: RGB::named(rltk::BLACK),
+            render_order: 1,
+        })
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+            dirty: true,
+        })
+        .with(Name {
+            name: name.to_string(),
+        })
+        .with(BlocksTile {})
+        .with(Quips {
+            quips,
+            max_countdown: 5,
+            countdown: 3,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -553,46 +590,15 @@ fn loot_milk(ecs: &mut World, owner: Entity) {
         .insert(owner, DropsLoot { item: l });
 }
 
-fn loot_mob(ecs: &mut World, owner: Entity) {
-    let l = ecs
-        .create_entity()
-        .with(InBackpack { owner })
-        .with(Renderable {
-            glyph: rltk::to_cp437('b'),
-            fg: RGB::from_hex("#605040").expect("hardcoded"),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 1,
-        })
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
-        })
-        .with(Monster {})
-        .with(HostileToPlayer {})
-        .with(Name {
-            name: "ANGRY SPARROW".to_string(),
-        })
-        .with(BlocksTile {})
-        .with(CombatStats {
-            max_hp: 5,
-            hp: 5,
-            defense: 1,
-            power: 3,
-        })
-        .marked::<SimpleMarker<SerializeMe>>()
-        .build();
-    let _ = ecs
-        .write_storage::<DropsLoot>()
-        .insert(owner, DropsLoot { item: l });
-}
-
 fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("FRIENDLY CROW", 2)
+        .add("FRIENDLY EAGLE", 100)
         .add("HEALING HERBS", 10)
-        .add("GOODBERRY", 10)
-        .add("GOOD THYME", map_depth / 2)
+        .add("GOODBERRY", 4)
+        .add("SPARKLING POWDER", 1 + map_depth)
+        .add("BERRY BUSH", 5)
+        .add("GOOD THYME", 100 + map_depth / 2)
         .add("WEIRD CONFUSING POWDER", 2 + map_depth)
         .add("BEAR TRAP", 3 + map_depth * 2)
         .add("PITFALL", 10)
@@ -741,7 +747,12 @@ fn thyme(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
-fn mushroom(ecs: &mut World, x: i32, y: i32, name: String) {
+fn mushroom(ecs: &mut World, x: i32, y: i32, name: String, low_hp: i32, high_hp: i32) {
+    let hp = ecs
+        .get_mut::<RandomNumberGenerator>()
+        .expect("rng should always be available")
+        .roll_dice(1, high_hp - low_hp)
+        + low_hp;
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
@@ -756,6 +767,7 @@ fn mushroom(ecs: &mut World, x: i32, y: i32, name: String) {
         .with(Item {})
         .with(ProvidesFood {})
         .with(Consumable {})
+        .with(ProvidesHealing { heal_amount: hp })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
@@ -774,6 +786,25 @@ fn friendly_crow(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(MagicMapper {})
+        .with(Consumable {})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn friendly_eagle(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('ë'),
+            fg: RGB::named(rltk::BLACK),
+            bg: RGB::named(rltk::WHITE),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "FRIENDLY EAGLE".to_string(),
+        })
+        .with(Item {})
+        .with(TeleportsPlayer { level: 1 })
         .with(Consumable {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -824,6 +855,30 @@ fn pitfall(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
+fn berry_bush(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('♣'),
+            fg: RGB::named(rltk::FORESTGREEN),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "BUSH".to_string(),
+        })
+        .with(EntryTrigger {
+            verb: "breaks and GOODBERRIES scatter".to_string(),
+        })
+        .with(SpawnsMobs {
+            mob_type: "GOODBERRY".to_string(),
+            num_mobs: 5,
+        })
+        .with(SingleActivation {})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
 fn bird_nest(ecs: &mut World, x: i32, y: i32) {
     let m = ecs
         .create_entity()
@@ -847,7 +902,6 @@ fn bird_nest(ecs: &mut World, x: i32, y: i32) {
         .with(SingleActivation {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
-    loot_mob(ecs, m);
 }
 
 fn ostrich_nest(ecs: &mut World, x: i32, y: i32) {
@@ -873,12 +927,10 @@ fn ostrich_nest(ecs: &mut World, x: i32, y: i32) {
         .with(SingleActivation {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
-    loot_mob(ecs, m);
 }
 
 fn dino_nest(ecs: &mut World, x: i32, y: i32) {
-    let m = ecs
-        .create_entity()
+    ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('o'),
@@ -899,5 +951,4 @@ fn dino_nest(ecs: &mut World, x: i32, y: i32) {
         .with(SingleActivation {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
-    loot_mob(ecs, m);
 }

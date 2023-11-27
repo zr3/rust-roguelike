@@ -20,6 +20,7 @@ mod fog;
 mod hunger_system;
 mod menu;
 mod particle_system;
+mod quip_system;
 mod random_table;
 mod rex_assets;
 mod saveload_system;
@@ -59,7 +60,9 @@ pub enum RunState {
         menu_selection: gui::MainMenuSelection,
     },
     SaveGame,
-    NextLevel,
+    NextLevel {
+        level: i32,
+    },
     MagicMapReveal {
         row: i32,
         iteration: i32,
@@ -173,10 +176,17 @@ impl GameState for State {
                         );
                         let is_ranged = self.ecs.read_storage::<Ranged>();
                         let is_item_ranged = is_ranged.get(item_entity);
+                        let is_player_teleporting = self.ecs.read_storage::<TeleportsPlayer>();
                         if let Some(is_item_ranged) = is_item_ranged {
                             newrunstate = RunState::ShowTargeting {
                                 range: is_item_ranged.range,
                                 item: item_entity,
+                            };
+                        } else if let Some(is_player_teleporting) =
+                            is_player_teleporting.get(item_entity)
+                        {
+                            newrunstate = RunState::NextLevel {
+                                level: is_player_teleporting.level,
                             };
                         } else {
                             let mut intent = self.ecs.write_storage::<WantsToUseItem>();
@@ -295,8 +305,8 @@ impl GameState for State {
                     menu_selection: gui::MainMenuSelection::LoadGame,
                 };
             }
-            RunState::NextLevel => {
-                self.goto_next_level();
+            RunState::NextLevel { level } => {
+                self.goto_level(level);
                 newrunstate = RunState::PreRun;
             }
             RunState::MagicMapReveal { row, iteration } => {
@@ -359,6 +369,7 @@ impl State {
         // fog.run_now(&self.ecs);
         let mut particles = particle_system::ParticleSpawnSystem {};
         particles.run_now(&self.ecs);
+        quip_system::QuipSystem {}.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -401,7 +412,7 @@ impl State {
         to_delete
     }
 
-    fn goto_next_level(&mut self) {
+    fn goto_level(&mut self, level: i32) {
         let to_delete = self.entities_to_remove_on_level_change();
         for target in to_delete {
             self.ecs
@@ -409,12 +420,7 @@ impl State {
                 .expect("should be able to delete entity");
         }
 
-        let current_depth;
-        {
-            let worldmap_resource = self.ecs.fetch::<Map>();
-            current_depth = worldmap_resource.depth;
-        }
-        self.generate_world_map(current_depth + 1);
+        self.generate_world_map(level);
 
         let player_entity = self.ecs.fetch::<Entity>();
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
@@ -544,6 +550,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<HostileToPlayer>();
     gs.ecs.register::<DropsLoot>();
     gs.ecs.register::<SpawnsMobs>();
+    gs.ecs.register::<TeleportsPlayer>();
+    gs.ecs.register::<Quips>();
     // new component register here
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());

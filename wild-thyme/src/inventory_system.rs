@@ -2,7 +2,7 @@ use crate::{
     components::{
         AreaOfEffect, CombatStats, Confusion, Consumable, Equippable, Equipped, HungerClock,
         HungerState, InflictsDamage, MagicMapper, ProvidesFood, ProvidesHealing, SufferDamage,
-        WantsToDropItem, WantsToRemoveItem, WantsToUseItem,
+        TeleportsPlayer, WantsToDropItem, WantsToRemoveItem, WantsToUseItem,
     },
     map::Map,
     particle_system::ParticleBuilder,
@@ -80,6 +80,7 @@ impl<'a> System<'a> for UseItemSystem {
         WriteExpect<'a, ParticleBuilder>,
         ReadStorage<'a, Position>,
         WriteExpect<'a, RunState>,
+        ReadStorage<'a, TeleportsPlayer>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -106,6 +107,7 @@ impl<'a> System<'a> for UseItemSystem {
             mut particle_builder,
             positions,
             mut runstate,
+            teleports_player,
         ) = data;
 
         for (entity, used_item, stats) in (&entities, &wants_use, &mut combat_stats).join() {
@@ -205,7 +207,7 @@ impl<'a> System<'a> for UseItemSystem {
                     stats.hp = i32::min(stats.max_hp, stats.hp + healer.heal_amount);
                     if entity == *player_entity {
                         gamelog.entries.push(format!(
-                            "YOU drank the {}, healing {} hp!",
+                            "The {} healed {} hp!",
                             names.get(used_item.item).unwrap().name,
                             healer.heal_amount
                         ));
@@ -314,7 +316,7 @@ impl<'a> System<'a> for UseItemSystem {
                         hc.duration = 20;
                         if entity == *player_entity {
                             gamelog.entries.push(format!(
-                                "YOU ate the {}! c:",
+                                "YOU feel satisfied and full after eating the {}",
                                 names.get(used_item.item).unwrap().name
                             ));
                         }
@@ -338,14 +340,32 @@ impl<'a> System<'a> for UseItemSystem {
             // magic mapping items
             let item_maps = magic_mapper.get(used_item.item);
             if let Some(_item_maps) = item_maps {
-                gamelog
-                    .entries
-                    .push(format!("YOU read a MAP of this level!"));
+                gamelog.entries.push(format!("YOU can now SEE this level!"));
                 item_was_used = true;
                 *runstate = RunState::MagicMapReveal {
                     row: 0,
                     iteration: 0,
                 };
+
+                let pos = positions.get(entity);
+                if let Some(pos) = pos {
+                    particle_builder.request(
+                        pos.x,
+                        pos.y,
+                        rltk::RGB::named(rltk::GREEN),
+                        rltk::RGB::named(rltk::BLACK),
+                        rltk::to_cp437('!'),
+                        2000.0,
+                    );
+                }
+            }
+
+            // teleporting items
+            if let Some(_) = teleports_player.get(used_item.item) {
+                gamelog
+                    .entries
+                    .push(format!("YOU are carried to another level!"));
+                item_was_used = true;
 
                 let pos = positions.get(entity);
                 if let Some(pos) = pos {

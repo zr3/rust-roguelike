@@ -112,7 +112,9 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
                 if !get_item(&mut gs.ecs) {
                     if try_next_level(&mut gs.ecs) {
-                        return RunState::NextLevel;
+                        return RunState::NextLevel {
+                            level: gs.ecs.fetch::<Map>().depth + 1,
+                        };
                     } else {
                         skip_turn(&mut gs.ecs);
                     }

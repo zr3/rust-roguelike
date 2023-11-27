@@ -42,6 +42,13 @@ pub struct HostileToPlayer {}
 pub struct Creature {}
 
 #[derive(Component, ConvertSaveload, Clone)]
+pub struct Quips {
+    pub quips: Vec<String>,
+    pub max_countdown: i32,
+    pub countdown: i32,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct DropsLoot {
     pub item: Entity,
 }
@@ -131,6 +138,11 @@ pub struct Ranged {
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct InflictsDamage {
     pub damage: i32,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct TeleportsPlayer {
+    pub level: i32,
 }
 
 #[derive(Component, ConvertSaveload, Clone)]

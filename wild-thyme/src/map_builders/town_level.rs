@@ -1,3 +1,4 @@
+use rltk::RGB;
 use specs::World;
 
 use crate::{
@@ -51,6 +52,25 @@ impl MapBuilder for TownLevelBuilder {
     }
 
     fn spawn_entities(&mut self, ecs: &mut World) {
+        spawner::npc(
+            ecs,
+            40,
+            18,
+            rltk::to_cp437('☺'),
+            RGB::from_hex("#805010").expect("hardcoded"),
+            "MYSTERIOUS FIGURE",
+            vec![
+                "been dark out here lately...".to_string(),
+                "word is, there's good THYME deep in the forest".to_string(),
+                "...".to_string(),
+                "I heard ancient lizards don't like ROCKS..".to_string(),
+                "FRIENDLY birds can help a person out..".to_string(),
+                "walk around enough, you'll see some TRAPS out there".to_string(),
+                "I'll give you something great if you can find me THYME!".to_string(),
+                "TREE PORTALS will get you deeper into the forest..".to_string(),
+                "don't get too HUNGRY...".to_string(),
+            ],
+        );
         spawner::spawn_treeportal(ecs, &self.portal_room);
     }
 

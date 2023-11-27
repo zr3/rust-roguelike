@@ -1,5 +1,5 @@
 use super::{Entity, Rect, World};
-use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
+use rltk::{Algorithm2D, BaseMap, Point, Rltk, RGB};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 

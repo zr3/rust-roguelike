@@ -85,7 +85,9 @@ pub fn save_game(ecs: &mut World) {
             Herbivore,
             HostileToPlayer,
             DropsLoot,
-            SpawnsMobs // new component register here
+            SpawnsMobs,
+            TeleportsPlayer,
+            Quips // new component register here
         );
     }
 
@@ -182,7 +184,9 @@ pub fn load_game(ecs: &mut World) {
             Herbivore,
             HostileToPlayer,
             DropsLoot,
-            SpawnsMobs // new component register here
+            SpawnsMobs,
+            TeleportsPlayer,
+            Quips // new component register here
         );
     }
 
