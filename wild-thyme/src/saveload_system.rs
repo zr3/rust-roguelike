@@ -87,7 +87,9 @@ pub fn save_game(ecs: &mut World) {
             DropsLoot,
             SpawnsMobs,
             TeleportsPlayer,
-            Quips // new component register here
+            Quips,
+            Backpack,
+            GoodThyme // new component register here
         );
     }
 
@@ -186,7 +188,9 @@ pub fn load_game(ecs: &mut World) {
             DropsLoot,
             SpawnsMobs,
             TeleportsPlayer,
-            Quips // new component register here
+            Quips,
+            Backpack,
+            GoodThyme // new component register here
         );
     }
 

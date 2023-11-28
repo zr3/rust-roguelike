@@ -1,4 +1,4 @@
-use rltk::RGB;
+use rltk::{RandomNumberGenerator, RGB};
 use specs::World;
 
 use crate::{
@@ -9,20 +9,56 @@ use crate::{
     spawner,
 };
 
-use super::MapBuilder;
+use super::{
+    common::{apply_tile_to_map, release_drunk},
+    MapBuilder,
+};
 
 pub struct TownLevelBuilder {
     map: Map,
     starting_position: Position,
     start_room: Rect,
+    pond_room: Rect,
+    cake_room: Rect,
     portal_room: Rect,
 }
 
 impl MapBuilder for TownLevelBuilder {
     fn build_map(&mut self) {
+        for i in self.map.width as usize..self.map.tiles.len() - self.map.width as usize {
+            if i % self.map.width as usize > 0
+                && i % (self.map.width as usize) < self.map.width as usize - 1
+                && (i % 13 == 0
+                    || i % 17 == 0
+                    || i % 31 == 0
+                    || i & 43 == 0
+                    || i % 11 == 0
+                    || i % 19 == 0)
+            {
+                self.map.tiles[i] = TileType::Floor;
+            }
+        }
+
         self.start_room = Rect::new(35, 17, 10, 10);
         apply_room_to_map(&mut self.map, &self.start_room);
         self.map.rooms.push(self.start_room);
+
+        self.pond_room = Rect::new(15, 15, 20, 20);
+        apply_room_to_map(&mut self.map, &self.pond_room);
+        self.map.rooms.push(self.pond_room);
+        let mut rng = RandomNumberGenerator::new();
+        for _ in 0..30 {
+            release_drunk(&mut self.map, (25, 25), 16, &mut rng, 10, TileType::Water);
+        }
+
+        self.cake_room = Rect::new(30, 30, 15, 10);
+        apply_room_to_map(&mut self.map, &self.cake_room);
+        apply_tile_to_map(
+            &mut self.map,
+            &Rect::new(35, 35, 5, 2),
+            TileType::IngredientTable,
+        );
+        self.map.rooms.push(self.cake_room);
 
         self.portal_room = Rect::new(52, 20, 10, 6);
         apply_room_to_map(&mut self.map, &self.portal_room);
@@ -37,18 +73,6 @@ impl MapBuilder for TownLevelBuilder {
             x: start.0,
             y: start.1,
         };
-
-        for i in 0..self.map.tiles.len() {
-            if i % 13 == 0
-                || i % 17 == 0
-                || i % 31 == 0
-                || i & 43 == 0
-                || i % 11 == 0
-                || i % 19 == 0
-            {
-                self.map.tiles[i] = TileType::Floor;
-            }
-        }
     }
 
     fn spawn_entities(&mut self, ecs: &mut World) {
@@ -71,6 +95,50 @@ impl MapBuilder for TownLevelBuilder {
                 "don't get too HUNGRY...".to_string(),
             ],
         );
+        let cake_center = self.cake_room.center();
+        spawner::npc(
+            ecs,
+            cake_center.0 - 1,
+            cake_center.1,
+            rltk::to_cp437('☺'),
+            RGB::from_hex("#a05010").expect("hardcoded"),
+            "MR HOLLYWOOD",
+            vec![
+                "the GREAT WOODY BAKE OFF is coming soon!".to_string(),
+                "help us BAKE a CAKE".to_string(),
+                "my TASTE is absolutely exquisite".to_string(),
+            ],
+        );
+        spawner::npc(
+            ecs,
+            cake_center.0 + 1,
+            cake_center.1,
+            rltk::to_cp437('☺'),
+            RGB::from_hex("#805050").expect("hardcoded"),
+            "MS GOODBERRY",
+            vec![
+                "I love CAKE of all shapes and sizes".to_string(),
+                "we will JUDGE your CAKE when the time comes!".to_string(),
+            ],
+        );
+        spawner::npc(
+            ecs,
+            cake_center.0,
+            cake_center.1 + 1,
+            rltk::to_cp437('☺'),
+            RGB::from_hex("#807010").expect("hardcoded"),
+            "SIR FIELDS",
+            vec![
+                "CAKE is made of several ingredients!".to_string(),
+                "FLOUR will hold it together".to_string(),
+                "MILK will help it mix".to_string(),
+                "FAT will moisturize it".to_string(),
+                "EGGS will keep it stable".to_string(),
+                "SWEET will improve the taste".to_string(),
+                "OTHERS will add a twist!".to_string(),
+                "THYME will bring it all together".to_string(),
+            ],
+        );
         spawner::spawn_treeportal(ecs, &self.portal_room);
     }
 
@@ -89,6 +157,8 @@ impl TownLevelBuilder {
             map: Map::new(1),
             starting_position: Position { x: 0, y: 0 },
             start_room: Rect::new(0, 0, 0, 0),
+            pond_room: Rect::new(0, 0, 0, 0),
+            cake_room: Rect::new(0, 0, 0, 0),
             portal_room: Rect::new(0, 0, 0, 0),
         }
     }

@@ -2,6 +2,7 @@ use crate::{
     components::{Confusion, EntityMoved, HungerClock, HungerState, Monster},
     map::TileType,
     particle_system::ParticleBuilder,
+    stats::Stats,
 };
 
 use super::{
@@ -75,6 +76,7 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
             entity_moved
                 .insert(entity, EntityMoved {})
                 .expect("should be able to add movement marker");
+            ecs.fetch_mut::<Stats>().steps_taken += 1;
         }
     }
 }
@@ -112,6 +114,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
                 if !get_item(&mut gs.ecs) {
                     if try_next_level(&mut gs.ecs) {
+                        gs.ecs.fetch_mut::<Stats>().portals_taken += 1;
                         return RunState::NextLevel {
                             level: gs.ecs.fetch::<Map>().depth + 1,
                         };

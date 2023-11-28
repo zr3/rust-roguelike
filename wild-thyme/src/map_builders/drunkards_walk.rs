@@ -5,7 +5,7 @@ use crate::{
     components::Position,
     map::{Map, TileType},
     map_builders::common::{
-        apply_horizontal_tunnel, apply_room_to_map, apply_vertical_tunnel, release_a_drunk,
+        apply_horizontal_tunnel, apply_room_to_map, apply_vertical_tunnel, release_floor_drunk,
     },
     rect::Rect,
     spawner,
@@ -76,7 +76,7 @@ impl DrunkardsWalkBuilder {
             }
             if ok {
                 apply_room_to_map(&mut self.map, &new_room);
-                release_a_drunk(
+                release_floor_drunk(
                     &mut self.map,
                     new_room.center(),
                     DRUNKARD_STEPS,

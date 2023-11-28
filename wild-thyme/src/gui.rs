@@ -3,7 +3,10 @@ use rltk::{Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
 use crate::{
-    components::{CombatStats, Equipped, Hidden, HungerClock, HungerState, InBackpack, Viewshed},
+    components::{
+        Backpack, CombatStats, Equipped, Hidden, HungerClock, HungerState, InBackpack, Viewshed,
+    },
+    stats::Stats,
     State,
 };
 
@@ -202,13 +205,17 @@ pub enum ItemMenuResult {
 pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
-    let backpack = gs.ecs.read_storage::<InBackpack>();
+    let backpack_items = gs.ecs.read_storage::<InBackpack>();
+    let backpacks = gs.ecs.read_storage::<Backpack>();
     let entities = gs.ecs.entities();
 
-    let inventory = (&backpack, &names)
+    let inventory = (&backpack_items, &names)
         .join()
         .filter(|item| item.0.owner == *player_entity);
     let count = inventory.count();
+    let backpack = backpacks
+        .get(*player_entity)
+        .expect("player should always have backpack");
 
     let mut y = (25 - (count / 2)) as i32;
     ctx.draw_box(
@@ -218,6 +225,25 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         (count + 3) as i32,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
+    );
+    let padding;
+    if backpack.items < 10 && backpack.capacity >= 10 {
+        padding = "0";
+    } else {
+        padding = "";
+    }
+    let right_offset;
+    if backpack.capacity >= 10 {
+        right_offset = 6;
+    } else {
+        right_offset = 4;
+    }
+    ctx.print_color(
+        15 + 31 - right_offset,
+        y - 2,
+        RGB::named(rltk::BURLYWOOD),
+        RGB::named(rltk::BLACK),
+        format!("{}{}/{}", padding, backpack.items, backpack.capacity),
     );
     ctx.print_color(
         18,
@@ -236,7 +262,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
-    for (entity, _pack, name) in (&entities, &backpack, &names)
+    for (entity, _pack, name) in (&entities, &backpack_items, &names)
         .join()
         .filter(|item| item.1.owner == *player_entity)
     {
@@ -474,7 +500,7 @@ pub fn ranged_target(
         0,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "Select Target:",
+        "[CLICK] on target (or an empty space to cancel):",
     );
 
     let mut available_cells = Vec::new();
@@ -522,23 +548,33 @@ pub enum GameOverResult {
     QuitToMenu,
 }
 
-pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
+fn print_stat(ctx: &mut Rltk, line: i32, stat: &str, stat_value: i32) {
     ctx.print_color_centered(
-        15,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
-        "AH YOU DIED!!",
-    );
-    ctx.print_color_centered(
-        17,
+        line,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
-        "it was a good run tho c:",
+        format!("{}: {}", stat, stat_value),
+    );
+}
+
+pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
+    ctx.print_color_centered(
+        15,
+        RGB::named(rltk::RED),
+        RGB::named(rltk::BLACK),
+        "OH NO YOU DIED!!",
     );
 
+    print_stat(ctx, 17, "deepest level", stats.deepest_level);
+    print_stat(ctx, 18, "THYME eaten", stats.thyme_eaten);
+    print_stat(ctx, 19, "things killed", stats.mobs_killed);
+    print_stat(ctx, 20, "portals taken", stats.portals_taken);
+    print_stat(ctx, 21, "traps triggered", stats.traps_triggered);
+    print_stat(ctx, 22, "steps taken", stats.steps_taken);
+
     ctx.print_color_centered(
-        20,
-        RGB::named(rltk::MAGENTA),
+        25,
+        RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
         "PRESS [ENTER]",
     );

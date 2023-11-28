@@ -5,7 +5,7 @@ use crate::{
     components::Position,
     map::{Map, TileType},
     map_builders::common::{
-        apply_horizontal_tunnel, apply_room_to_map, apply_vertical_tunnel, release_a_drunk,
+        apply_horizontal_tunnel, apply_room_to_map, apply_vertical_tunnel, release_floor_drunk,
     },
     rect::Rect,
     spawner,
@@ -84,7 +84,7 @@ impl NestLevelBuilder {
             }
             if ok {
                 apply_room_to_map(&mut self.map, &new_room);
-                let steps = release_a_drunk(
+                let steps = release_floor_drunk(
                     &mut self.map,
                     new_room.center(),
                     DRUNKARD_STEPS,
@@ -101,7 +101,7 @@ impl NestLevelBuilder {
                     if rng.range(0, 2) == 1 {
                         apply_horizontal_tunnel(&mut self.map, prev_x, new_x, prev_y);
                         apply_vertical_tunnel(&mut self.map, prev_y, new_y, new_x);
-                        let steps = release_a_drunk(
+                        let steps = release_floor_drunk(
                             &mut self.map,
                             (new_x, prev_y),
                             DRUNKARD_STEPS / 4,
@@ -112,7 +112,7 @@ impl NestLevelBuilder {
                     } else {
                         apply_vertical_tunnel(&mut self.map, prev_y, new_y, prev_x);
                         apply_horizontal_tunnel(&mut self.map, prev_x, new_x, new_y);
-                        let steps = release_a_drunk(
+                        let steps = release_floor_drunk(
                             &mut self.map,
                             (prev_x, new_y),
                             DRUNKARD_STEPS / 4,

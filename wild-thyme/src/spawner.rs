@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use crate::components::{
-    AreaOfEffect, Confusion, Consumable, Creature, DefenseBonus, DropsLoot, EntryTrigger,
-    EquipmentSlot, Equippable, Herbivore, Hidden, HostileToPlayer, HungerClock, InBackpack,
-    InflictsDamage, MagicMapper, MeleePowerBonus, ProvidesFood, ProvidesHealing, Quips, Ranged,
-    SerializeMe, SingleActivation, SpawnsMobs, TeleportsPlayer,
+    AreaOfEffect, Backpack, Confusion, Consumable, Creature, DefenseBonus, DropsLoot, EntryTrigger,
+    EquipmentSlot, Equippable, GoodThyme, Herbivore, Hidden, HostileToPlayer, HungerClock,
+    InBackpack, InflictsDamage, MagicMapper, MeleePowerBonus, ProvidesFood, ProvidesHealing, Quips,
+    Ranged, SerializeMe, SingleActivation, SpawnsMobs, TeleportsPlayer,
 };
 use crate::random_table::RandomTable;
 
@@ -12,7 +12,7 @@ use super::{
     BlocksTile, CombatStats, Item, Monster, Name, Player, Position, Rect, Renderable, Viewshed,
     MAPWIDTH,
 };
-use rltk::{Point, RandomNumberGenerator, RGB};
+use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
 use specs::saveload::{MarkedBuilder, SimpleMarker};
 
@@ -99,6 +99,7 @@ pub fn spawn_specific_on_point(ecs: &mut World, point: (i32, i32), spawnable: &S
         "DEER" => deer(ecs, x, y),
         "SQUIRREL" => squirrel(ecs, x, y),
         "FROG" => frog(ecs, x, y),
+        "BUTTERFLY" => butterfly(ecs, x, y),
         "MOSQUITO" => mosquito(ecs, x, y),
         "SPIDER" => spider(ecs, x, y),
         "GOAT" => goat(ecs, x, y),
@@ -174,23 +175,14 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             state: crate::components::HungerState::Full,
             duration: 20,
         })
+        .with(Backpack {
+            capacity: 5,
+            items: 0,
+        })
         .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
-fn chameleon(ecs: &mut World, x: i32, y: i32) {
-    let color_roll: i32;
-    let color: RGB;
-    {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        color_roll = rng.roll_dice(1, 2);
-        color = match color_roll {
-            1 => RGB::from_u8(rng.range(0, 255), rng.range(0, 255), rng.range(0, 255)),
-            _ => RGB::named(rltk::PURPLE),
-        };
-    }
-    monster(ecs, x, y, rltk::to_cp437('c'), color, "CHAMELEON", 16, 1, 4)
-}
 fn mosquito(ecs: &mut World, x: i32, y: i32) {
     monster(
         ecs,
@@ -339,8 +331,8 @@ pub fn npc<S: ToString>(
         .with(BlocksTile {})
         .with(Quips {
             quips,
-            max_countdown: 5,
-            countdown: 3,
+            max_countdown: 10,
+            countdown: 0,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -420,6 +412,18 @@ fn frog(ecs: &mut World, x: i32, y: i32) {
     loot_meat(ecs, c);
 }
 
+fn butterfly(ecs: &mut World, x: i32, y: i32) {
+    let c = creature(
+        ecs,
+        x,
+        y,
+        rltk::to_cp437('*'),
+        RGB::named(rltk::LAVENDER),
+        "BUTTERFLY",
+    );
+    loot_meat(ecs, c);
+}
+
 fn goat(ecs: &mut World, x: i32, y: i32) {
     let c = creature(
         ecs,
@@ -493,7 +497,7 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name {
-            name: "SCROLL of FIREBALL".to_string(),
+            name: "SPARKLING POWDER".to_string(),
         })
         .with(Item {})
         .with(Consumable {})
@@ -593,12 +597,12 @@ fn loot_milk(ecs: &mut World, owner: Entity) {
 fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("FRIENDLY CROW", 2)
-        .add("FRIENDLY EAGLE", 100)
+        .add("FRIENDLY EAGLE", 1)
         .add("HEALING HERBS", 10)
         .add("GOODBERRY", 4)
         .add("SPARKLING POWDER", 1 + map_depth)
         .add("BERRY BUSH", 5)
-        .add("GOOD THYME", 100 + map_depth / 2)
+        .add("GOOD THYME", 1 + map_depth / 2)
         .add("WEIRD CONFUSING POWDER", 2 + map_depth)
         .add("BEAR TRAP", 3 + map_depth * 2)
         .add("PITFALL", 10)
@@ -609,8 +613,11 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("MAGIC MUSHROOM", 1 + map_depth * 2)
         .add("MOREL MUSHROOM", 3 + map_depth * 2)
         .add("DEER", 10)
+        .add("FROG", 15)
         .add("SPARROW", 15)
         .add("SQUIRREL", 15)
+        .add("COW", 10 + map_depth)
+        .add("GOAT", 10 + map_depth)
         .add("SPIDER", 2 + map_depth * 2)
         .add("OSTRICH", 2 + map_depth * 2)
         .add("GHOST", map_depth)
@@ -666,48 +673,6 @@ fn bark_armor(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
-fn longsword(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('/'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "LONGSWORD".to_string(),
-        })
-        .with(Item {})
-        .with(Equippable {
-            slot: EquipmentSlot::Melee,
-        })
-        .with(MeleePowerBonus { power: 4 })
-        .marked::<SimpleMarker<SerializeMe>>()
-        .build();
-}
-
-fn tower_shield(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('('),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "TOWER SHIELD".to_string(),
-        })
-        .with(Item {})
-        .with(Equippable {
-            slot: EquipmentSlot::Shield,
-        })
-        .with(DefenseBonus { defense: 3 })
-        .marked::<SimpleMarker<SerializeMe>>()
-        .build();
-}
-
 fn goodberry(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
@@ -740,6 +705,7 @@ fn thyme(ecs: &mut World, x: i32, y: i32) {
             name: "GOOD THYME".to_string(),
         })
         .with(Item {})
+        .with(GoodThyme {})
         .with(ProvidesFood {})
         .with(Consumable {})
         .with(ProvidesHealing { heal_amount: 100 })
@@ -757,7 +723,7 @@ fn mushroom(ecs: &mut World, x: i32, y: i32, name: String, low_hp: i32, high_hp:
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('♣'),
-            fg: RGB::named(rltk::BEIGE),
+            fg: RGB::from_hex("#696040").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -860,7 +826,7 @@ fn berry_bush(ecs: &mut World, x: i32, y: i32) {
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('♣'),
-            fg: RGB::named(rltk::FORESTGREEN),
+            fg: RGB::from_hex("#804080").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -880,8 +846,7 @@ fn berry_bush(ecs: &mut World, x: i32, y: i32) {
 }
 
 fn bird_nest(ecs: &mut World, x: i32, y: i32) {
-    let m = ecs
-        .create_entity()
+    ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('o'),
@@ -905,8 +870,7 @@ fn bird_nest(ecs: &mut World, x: i32, y: i32) {
 }
 
 fn ostrich_nest(ecs: &mut World, x: i32, y: i32) {
-    let m = ecs
-        .create_entity()
+    ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('o'),

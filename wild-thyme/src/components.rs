@@ -1,4 +1,4 @@
-use rltk::{Point, RGB};
+use rltk::RGB;
 use serde::{Deserialize, Serialize};
 use specs::error::NoError;
 use specs::prelude::*;
@@ -95,9 +95,18 @@ impl SufferDamage {
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Item {}
 
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct GoodThyme {}
+
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct InBackpack {
     pub owner: Entity,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct Backpack {
+    pub capacity: i32,
+    pub items: i32,
 }
 
 #[derive(Component, ConvertSaveload, Clone)]

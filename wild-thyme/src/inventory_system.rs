@@ -1,11 +1,13 @@
 use crate::{
     components::{
-        AreaOfEffect, CombatStats, Confusion, Consumable, Equippable, Equipped, HungerClock,
-        HungerState, InflictsDamage, MagicMapper, ProvidesFood, ProvidesHealing, SufferDamage,
-        TeleportsPlayer, WantsToDropItem, WantsToRemoveItem, WantsToUseItem,
+        AreaOfEffect, Backpack, CombatStats, Confusion, Consumable, Equippable, Equipped,
+        GoodThyme, HungerClock, HungerState, InflictsDamage, MagicMapper, ProvidesFood,
+        ProvidesHealing, SufferDamage, TeleportsPlayer, WantsToDropItem, WantsToRemoveItem,
+        WantsToUseItem,
     },
     map::Map,
     particle_system::ParticleBuilder,
+    stats::Stats,
     RunState,
 };
 
@@ -22,31 +24,59 @@ impl<'a> System<'a> for ItemCollectionSystem {
         WriteStorage<'a, Position>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, InBackpack>,
+        WriteStorage<'a, Backpack>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_entity, mut gamelog, mut wants_pickup, mut positions, names, mut backpack) =
-            data;
+        let (
+            player_entity,
+            mut gamelog,
+            mut wants_pickup,
+            mut positions,
+            names,
+            mut backpack_items,
+            mut backpacks,
+        ) = data;
 
         for pickup in wants_pickup.join() {
-            positions.remove(pickup.item);
-            backpack
-                .insert(
-                    pickup.item,
-                    InBackpack {
-                        owner: pickup.collected_by,
-                    },
-                )
-                .expect("should be able to insert backpack entity");
+            let mut backpack_too_full = false;
+            if let Some(backpack) = backpacks.get_mut(pickup.collected_by) {
+                if backpack.items >= backpack.capacity {
+                    backpack_too_full = true;
+                } else {
+                    backpack.items += 1;
+                }
+            }
+            if !backpack_too_full {
+                positions.remove(pickup.item);
+                backpack_items
+                    .insert(
+                        pickup.item,
+                        InBackpack {
+                            owner: pickup.collected_by,
+                        },
+                    )
+                    .expect("should be able to insert backpack entity");
+            }
 
             if pickup.collected_by == *player_entity {
-                gamelog.entries.push(format!(
-                    "YOU pick up the {}.",
-                    names
-                        .get(pickup.item)
-                        .expect("items should always have Name")
-                        .name
-                ))
+                if backpack_too_full {
+                    gamelog.entries.push(format!(
+                        "YOUR backpack is full! YOU can't pick up the {}.",
+                        names
+                            .get(pickup.item)
+                            .expect("items should always have Name")
+                            .name
+                    ))
+                } else {
+                    gamelog.entries.push(format!(
+                        "YOU pick up the {}.",
+                        names
+                            .get(pickup.item)
+                            .expect("items should always have Name")
+                            .name
+                    ))
+                }
             }
         }
 
@@ -81,6 +111,9 @@ impl<'a> System<'a> for UseItemSystem {
         ReadStorage<'a, Position>,
         WriteExpect<'a, RunState>,
         ReadStorage<'a, TeleportsPlayer>,
+        WriteStorage<'a, Backpack>,
+        ReadStorage<'a, GoodThyme>,
+        WriteExpect<'a, Stats>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -103,11 +136,14 @@ impl<'a> System<'a> for UseItemSystem {
             consumables,
             equippable,
             mut equipped,
-            mut backpack,
+            mut backpack_items,
             mut particle_builder,
             positions,
             mut runstate,
             teleports_player,
+            mut backpacks,
+            good_thyme,
+            mut game_stats,
         ) = data;
 
         for (entity, used_item, stats) in (&entities, &wants_use, &mut combat_stats).join() {
@@ -172,9 +208,12 @@ impl<'a> System<'a> for UseItemSystem {
                 }
                 for item in to_unequip.iter() {
                     equipped.remove(*item);
-                    backpack
+                    backpack_items
                         .insert(*item, InBackpack { owner: target })
                         .expect("should be able to insert InBackpack for item");
+                    if let Some(backpack) = backpacks.get_mut(target) {
+                        backpack.items += 1;
+                    }
                 }
 
                 // wield the item!
@@ -187,7 +226,10 @@ impl<'a> System<'a> for UseItemSystem {
                         },
                     )
                     .expect("should be able to equip item");
-                backpack.remove(used_item.item);
+                if let Some(backpack) = backpacks.get_mut(target) {
+                    backpack.items -= 1;
+                }
+                backpack_items.remove(used_item.item);
                 if target == *player_entity {
                     gamelog.entries.push(format!(
                         "YOU equip {}.",
@@ -380,16 +422,22 @@ impl<'a> System<'a> for UseItemSystem {
                 }
             }
 
+            // thyme
+            if let Some(_) = good_thyme.get(used_item.item) {
+                game_stats.thyme_eaten += 1;
+            }
+
             // consume if needed
             if item_was_used {
-                let consumable = consumables.get(used_item.item);
-                match consumable {
-                    None => {}
-                    Some(_) => {
-                        entities
-                            .delete(used_item.item)
-                            .expect("item entity should exist if it's getting used");
+                if let Some(_) = consumables.get(used_item.item) {
+                    if let Some(item) = backpack_items.get(used_item.item) {
+                        if let Some(backpack) = backpacks.get_mut(item.owner) {
+                            backpack.items -= 1;
+                        }
                     }
+                    entities
+                        .delete(used_item.item)
+                        .expect("item entity should exist if it's getting used");
                 }
             }
         }
@@ -409,6 +457,7 @@ impl<'a> System<'a> for ItemDropSystem {
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, InBackpack>,
+        WriteStorage<'a, Backpack>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -419,7 +468,8 @@ impl<'a> System<'a> for ItemDropSystem {
             mut wants_drop,
             names,
             mut positions,
-            mut backpack,
+            mut backpack_items,
+            mut backpacks,
         ) = data;
         for (entity, to_drop) in (&entities, &wants_drop).join() {
             let mut dropper_pos: Position = Position { x: 0, y: 0 };
@@ -439,7 +489,10 @@ impl<'a> System<'a> for ItemDropSystem {
                     },
                 )
                 .expect("should be able to add position for newly dropped item");
-            backpack.remove(to_drop.item);
+            if let Some(backpack) = backpacks.get_mut(entity) {
+                backpack.items -= 1;
+            }
+            backpack_items.remove(to_drop.item);
 
             if entity == *player_entity {
                 gamelog.entries.push(format!(
@@ -460,16 +513,51 @@ impl<'a> System<'a> for ItemRemoveSystem {
         WriteStorage<'a, WantsToRemoveItem>,
         WriteStorage<'a, Equipped>,
         WriteStorage<'a, InBackpack>,
+        WriteStorage<'a, Backpack>,
+        ReadExpect<'a, Entity>,
+        WriteExpect<'a, GameLog>,
+        ReadStorage<'a, Name>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut wants_remove, mut equipped, mut backpack) = data;
+        let (
+            entities,
+            mut wants_remove,
+            mut equipped,
+            mut backpack_items,
+            mut backpacks,
+            player_entity,
+            mut gamelog,
+            names,
+        ) = data;
 
-        for (entity, to_remove) in (&entities, &wants_remove).join() {
-            equipped.remove(to_remove.item);
-            backpack
-                .insert(to_remove.item, InBackpack { owner: entity })
-                .expect("should be able to add unequipped item to backpack");
+        for (entity, to_remove, name) in (&entities, &wants_remove, &names).join() {
+            let mut backpack_too_full = false;
+            if let Some(backpack) = backpacks.get_mut(entity) {
+                if backpack.items >= backpack.capacity {
+                    backpack_too_full = true;
+                } else {
+                    backpack.items += 1;
+                }
+            }
+            if !backpack_too_full {
+                equipped.remove(to_remove.item);
+                backpack_items
+                    .insert(to_remove.item, InBackpack { owner: entity })
+                    .expect("should be able to add unequipped item to backpack");
+            }
+            if entity == *player_entity {
+                if backpack_too_full {
+                    gamelog
+                        .entries
+                        .push(format!("YOU unequipped the {}", name.name));
+                } else {
+                    gamelog.entries.push(format!(
+                        "YOUR backpack is full! can't unequip the {}",
+                        name.name
+                    ));
+                }
+            }
         }
 
         wants_remove.clear();

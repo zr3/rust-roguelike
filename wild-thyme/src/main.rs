@@ -11,12 +11,13 @@ use player::*;
 mod rect;
 use rect::*;
 mod components;
+mod stats;
 use components::*;
+use stats::*;
 mod gamelog;
 mod gui;
 mod inventory_system;
 use inventory_system::*;
-mod fog;
 mod hunger_system;
 mod menu;
 mod particle_system;
@@ -112,7 +113,6 @@ impl GameState for State {
         match newrunstate {
             RunState::PreRun => {
                 self.run_systems();
-                // respawn_fog(&mut self.ecs);
                 self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
@@ -267,7 +267,7 @@ impl GameState for State {
                 }
             }
             RunState::GameOver => {
-                let result = gui::game_over(ctx);
+                let result = gui::game_over(ctx, &self.ecs.fetch::<Stats>());
                 match result {
                     gui::GameOverResult::NoSelection => {}
                     gui::GameOverResult::QuitToMenu => {
@@ -307,6 +307,10 @@ impl GameState for State {
             }
             RunState::NextLevel { level } => {
                 self.goto_level(level);
+                let mut stats = self.ecs.fetch_mut::<Stats>();
+                if stats.deepest_level < level {
+                    stats.deepest_level = level;
+                }
                 newrunstate = RunState::PreRun;
             }
             RunState::MagicMapReveal { row, iteration } => {
@@ -365,11 +369,11 @@ impl State {
         remove_items.run_now(&self.ecs);
         let mut hunger = HungerSystem {};
         hunger.run_now(&self.ecs);
+        quip_system::QuipSystem {}.run_now(&self.ecs);
         // let mut fog = fog::FogSystem {};
         // fog.run_now(&self.ecs);
         let mut particles = particle_system::ParticleSpawnSystem {};
         particles.run_now(&self.ecs);
-        quip_system::QuipSystem {}.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -452,6 +456,7 @@ impl State {
     fn reset_game(&mut self) {
         let player_entity = spawner::player(&mut self.ecs, 0, 0);
         self.ecs.insert(player_entity);
+        self.ecs.insert(Stats::new());
         self.ecs.insert(Map::new(1));
         self.ecs.insert(Point::new(0, 0));
         self.ecs.insert(RunState::MainMenu {
@@ -552,6 +557,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<SpawnsMobs>();
     gs.ecs.register::<TeleportsPlayer>();
     gs.ecs.register::<Quips>();
+    gs.ecs.register::<Backpack>();
+    gs.ecs.register::<GoodThyme>();
     // new component register here
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());

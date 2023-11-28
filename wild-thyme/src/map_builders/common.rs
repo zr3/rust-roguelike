@@ -7,12 +7,23 @@ use crate::{
     rect::Rect,
 };
 
-pub fn release_a_drunk(
+pub fn release_floor_drunk(
     map: &mut Map,
     start_pos: (i32, i32),
     steps: i32,
     rng: &mut RandomNumberGenerator,
     return_steps: i32,
+) -> Vec<(i32, i32)> {
+    release_drunk(map, start_pos, steps, rng, return_steps, TileType::Floor)
+}
+
+pub fn release_drunk(
+    map: &mut Map,
+    start_pos: (i32, i32),
+    steps: i32,
+    rng: &mut RandomNumberGenerator,
+    return_steps: i32,
+    tile_type: TileType,
 ) -> Vec<(i32, i32)> {
     let mut drunk_x = start_pos.0;
     let mut drunk_y = start_pos.1;
@@ -44,16 +55,20 @@ pub fn release_a_drunk(
             result_steps.push((drunk_x, drunk_y));
         }
         let idx = map.xy_idx(drunk_x, drunk_y);
-        map.tiles[idx] = TileType::Floor;
+        map.tiles[idx] = tile_type;
     }
     result_steps
 }
 
 pub fn apply_room_to_map(map: &mut Map, room: &Rect) {
+    apply_tile_to_map(map, room, TileType::Floor);
+}
+
+pub fn apply_tile_to_map(map: &mut Map, room: &Rect, tile: TileType) {
     for y in room.y1 + 1..=room.y2 {
         for x in room.x1 + 1..=room.x2 {
             let idx = map.xy_idx(x, y);
-            map.tiles[idx] = TileType::Floor;
+            map.tiles[idx] = tile;
         }
     }
 }

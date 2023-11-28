@@ -1,6 +1,7 @@
 use crate::{
     components::{DropsLoot, Name, Position, WantsToDropItem},
     map::Map,
+    stats::Stats,
 };
 
 use super::{gamelog::GameLog, CombatStats, Player, Renderable, RunState, SufferDamage};
@@ -33,7 +34,7 @@ impl<'a> System<'a> for DamageSystem {
             }
             if stats.hp <= 0 {
                 if let Some(loot) = drops_loot.get(entity) {
-                    wants_to_drop.insert(entity, WantsToDropItem { item: loot.item });
+                    let _ = wants_to_drop.insert(entity, WantsToDropItem { item: loot.item });
                 }
             }
         }
@@ -59,7 +60,8 @@ pub fn delete_the_dead(ecs: &mut World) {
                         if let Some(victim_name) = victim_name {
                             log.entries.push(format!("{} is dead", &victim_name.name));
                         }
-                        dead.push(entity)
+                        ecs.fetch_mut::<Stats>().mobs_killed += 1;
+                        dead.push(entity);
                     }
                     Some(_) => {
                         let mut runwriter = ecs.write_resource::<RunState>();

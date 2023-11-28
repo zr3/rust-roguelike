@@ -1,6 +1,7 @@
 use crate::{
     components::{Name, Quips},
     gamelog::GameLog,
+    particle_system::ParticleBuilder,
     RunState,
 };
 
@@ -18,18 +19,20 @@ impl<'a> System<'a> for QuipSystem {
         ReadStorage<'a, Name>,
         WriteStorage<'a, Quips>,
         ReadStorage<'a, Position>,
+        WriteExpect<'a, ParticleBuilder>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (runstate, mut rng, map, mut log, names, mut quips, positions) = data;
+        let (runstate, mut rng, map, mut log, names, mut quips, positions, mut particle_builder) =
+            data;
 
         if *runstate != RunState::PostTurn {
             return;
         }
 
-        for (name, position, quips) in (&names, &positions, &mut quips).join() {
+        for (name, pos, quips) in (&names, &positions, &mut quips).join() {
             // do nothing if out of view of player
-            if !map.visible_tiles[map.xy_idx(position.x, position.y)] {
+            if !map.visible_tiles[map.xy_idx(pos.x, pos.y)] {
                 continue;
             }
             quips.countdown -= 1;
@@ -37,9 +40,17 @@ impl<'a> System<'a> for QuipSystem {
                 continue;
             }
             // pick random quip and log!
-            quips.countdown = quips.max_countdown;
+            quips.countdown = rng.roll_dice(1, quips.max_countdown / 2) + (quips.max_countdown / 2);
             if let Some(quip) = rng.random_slice_entry(&quips.quips) {
                 log.entries.push(format!("{}: {}", name.name, quip));
+                particle_builder.request(
+                    pos.x,
+                    pos.y,
+                    rltk::RGB::named(rltk::WHITE),
+                    rltk::RGB::named(rltk::BLACK),
+                    rltk::to_cp437('♫'),
+                    200.0,
+                );
             }
         }
     }

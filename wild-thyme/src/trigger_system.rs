@@ -12,6 +12,7 @@ use crate::{
     map::Map,
     particle_system::ParticleBuilder,
     spawn_system::SpawnBuilder,
+    stats::Stats,
 };
 
 pub struct TriggerSystem {}
@@ -34,6 +35,7 @@ impl<'a> System<'a> for TriggerSystem {
         ReadStorage<'a, SpawnsMobs>,
         WriteExpect<'a, SpawnBuilder>,
         WriteExpect<'a, RandomNumberGenerator>,
+        WriteExpect<'a, Stats>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -54,6 +56,7 @@ impl<'a> System<'a> for TriggerSystem {
             spawns_mobs,
             mut spawn_builder,
             mut rng,
+            mut stats,
         ) = data;
 
         let mut remove_entities: Vec<Entity> = Vec::new();
@@ -121,8 +124,6 @@ impl<'a> System<'a> for TriggerSystem {
                                     }
                                 }
                             }
-                            log.entries
-                                .push(format!("spawner triggers at {}, {}!", pos.x, pos.y));
                             for _ in 0..spawns_mobs.num_mobs {
                                 if let Some(idx) = rng.random_slice_index(&spawn_points) {
                                     let (x, y) = spawn_points[idx];
@@ -136,10 +137,6 @@ impl<'a> System<'a> for TriggerSystem {
                                         200.0,
                                     );
                                     spawn_points.remove(idx);
-                                    log.entries.push(format!(
-                                        "{} appears at {}, {}!",
-                                        &spawns_mobs.mob_type, x, y
-                                    ));
                                 }
                             }
                         }
@@ -148,6 +145,8 @@ impl<'a> System<'a> for TriggerSystem {
                         if let Some(_sa) = single_activation.get(*entity_id) {
                             remove_entities.push(*entity_id);
                         }
+
+                        stats.traps_triggered += 1;
                     }
                 }
             }
