@@ -67,10 +67,15 @@ impl MapBuilder for WizardLevelBuilder {
             RGB::from_hex("#805080").expect("hardcoded"),
             "FOREST WIZARD",
             vec![
-                "welcome!".to_string(),
+                "WELCOME!".to_string(),
+                "a FRIENDLY EAGLE will help you get home".to_string(),
+                "make sure you have the ingredients you need!".to_string(),
                 "hello, friend".to_string(),
                 "I sure love to cook".to_string(),
                 "the old ways teach us to GIVE".to_string(),
+                "there is nothing but PAIN beyond this level".to_string(),
+                "if you go deeper, you'll find nothing".to_string(),
+                "only a sense of PRIDE and SATISFACTION beyond here".to_string(),
             ],
         );
         spawner::spawn_treeportal(ecs, &self.portal_room);
@@ -82,6 +87,7 @@ impl MapBuilder for WizardLevelBuilder {
             .add("MAGIC MUSHROOM", 10)
             .add("MOREL MUSHROOM", 5)
             .add("FROG", 5)
+            .add("FRIENDLY EAGLE", 3)
             .add("BUTTERFLY", 10);
         let room = self.start_room;
         let mut spawn_points: HashMap<usize, String> = HashMap::new();
@@ -123,9 +129,9 @@ impl MapBuilder for WizardLevelBuilder {
 }
 
 impl WizardLevelBuilder {
-    pub fn new() -> WizardLevelBuilder {
+    pub fn new(depth: i32) -> WizardLevelBuilder {
         WizardLevelBuilder {
-            map: Map::new(1),
+            map: Map::new(depth),
             starting_position: Position { x: 0, y: 0 },
             start_room: Rect::new(0, 0, 0, 0),
             portal_room: Rect::new(0, 0, 0, 0),

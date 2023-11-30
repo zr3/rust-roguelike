@@ -25,6 +25,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
         ReadStorage<'a, Name>,
         WriteStorage<'a, InBackpack>,
         WriteStorage<'a, Backpack>,
+        WriteExpect<'a, Stats>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -36,6 +37,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
             names,
             mut backpack_items,
             mut backpacks,
+            mut stats,
         ) = data;
 
         for pickup in wants_pickup.join() {
@@ -67,7 +69,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
                             .get(pickup.item)
                             .expect("items should always have Name")
                             .name
-                    ))
+                    ));
                 } else {
                     gamelog.entries.push(format!(
                         "YOU pick up the {}.",
@@ -75,7 +77,12 @@ impl<'a> System<'a> for ItemCollectionSystem {
                             .get(pickup.item)
                             .expect("items should always have Name")
                             .name
-                    ))
+                    ));
+                    if let Some(backpack) = backpacks.get(*player_entity) {
+                        if backpack.items > stats.most_items_held {
+                            stats.most_items_held = backpack.items;
+                        }
+                    }
                 }
             }
         }

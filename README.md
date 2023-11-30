@@ -43,12 +43,12 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 
 ## plan
 
-m1: generic forest adventure with basic mechanics
+✔️ m1: generic forest adventure with basic mechanics
 - L1-5: herbivores, ghosts, spiders
 - L6-10: REY, ghosts, wolves
 - L11: the wizard
 
-m2: town with npcs
+✔️ m2: town with npcs
 m3: ui, story and outer loop
 m4: narrator
 m5: web site

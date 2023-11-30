@@ -105,6 +105,8 @@ pub fn spawn_specific_on_point(ecs: &mut World, point: (i32, i32), spawnable: &S
         "GOAT" => goat(ecs, x, y),
         "COW" => cow(ecs, x, y),
         "GHOST" => ghost(ecs, x, y),
+        "REY" => rey(ecs, x, y),
+        "PEPPERMINT WHOPPER" => pep(ecs, x, y),
         "FIREFLY" => {} // provides light
 
         _ => {}
@@ -176,7 +178,7 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             duration: 20,
         })
         .with(Backpack {
-            capacity: 5,
+            capacity: 10,
             items: 0,
         })
         .marked::<SimpleMarker<SerializeMe>>()
@@ -194,7 +196,7 @@ fn mosquito(ecs: &mut World, x: i32, y: i32) {
         5,
         1,
         4,
-    )
+    );
 }
 fn spider(ecs: &mut World, x: i32, y: i32) {
     monster(
@@ -207,7 +209,7 @@ fn spider(ecs: &mut World, x: i32, y: i32) {
         16,
         1,
         4,
-    )
+    );
 }
 fn ghost(ecs: &mut World, x: i32, y: i32) {
     monster(
@@ -220,10 +222,10 @@ fn ghost(ecs: &mut World, x: i32, y: i32) {
         16,
         2,
         4,
-    )
+    );
 }
 fn sparrow(ecs: &mut World, x: i32, y: i32) {
-    monster(
+    let m = monster(
         ecs,
         x,
         y,
@@ -233,10 +235,11 @@ fn sparrow(ecs: &mut World, x: i32, y: i32) {
         5,
         1,
         3,
-    )
+    );
+    loot_egg(ecs, m);
 }
 fn ostrich(ecs: &mut World, x: i32, y: i32) {
-    monster(
+    let m = monster(
         ecs,
         x,
         y,
@@ -246,10 +249,11 @@ fn ostrich(ecs: &mut World, x: i32, y: i32) {
         8,
         1,
         4,
-    )
+    );
+    loot_egg(ecs, m);
 }
 fn dilophosaurus(ecs: &mut World, x: i32, y: i32) {
-    monster(
+    let m = monster(
         ecs,
         x,
         y,
@@ -259,7 +263,8 @@ fn dilophosaurus(ecs: &mut World, x: i32, y: i32) {
         8,
         2,
         8,
-    )
+    );
+    loot_egg(ecs, m);
 }
 
 fn monster<S: ToString>(
@@ -272,7 +277,7 @@ fn monster<S: ToString>(
     hp: i32,
     defense: i32,
     power: i32,
-) {
+) -> Entity {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
@@ -297,6 +302,82 @@ fn monster<S: ToString>(
             hp,
             defense,
             power,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build()
+}
+
+fn rey(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('☺'),
+            fg: RGB::from_hex("#a0a020").expect("hardcoded"),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 1,
+        })
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 9,
+            dirty: true,
+        })
+        .with(Monster {})
+        .with(Quips {
+            quips: vec![
+                "I'll zap you!".to_string(),
+                "one of these days...".to_string(),
+            ],
+            max_countdown: 10,
+            countdown: 0,
+        })
+        .with(Name {
+            name: "REY".to_string(),
+        })
+        .with(BlocksTile {})
+        .with(CombatStats {
+            max_hp: 10,
+            hp: 10,
+            defense: 4,
+            power: 2,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn pep(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('☺'),
+            fg: RGB::from_hex("#a04080").expect("hardcoded"),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 1,
+        })
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 9,
+            dirty: true,
+        })
+        .with(Monster {})
+        .with(Quips {
+            quips: vec![
+                "wow I sure love pointy things".to_string(),
+                "thpthpthptph.. yummy".to_string(),
+                "nothing like a goooood burger".to_string(),
+                "stabstabstabstabstab".to_string(),
+            ],
+            max_countdown: 10,
+            countdown: 0,
+        })
+        .with(Name {
+            name: "PEPPERMINT WHOPPER MCGILLICUDY III".to_string(),
+        })
+        .with(BlocksTile {})
+        .with(CombatStats {
+            max_hp: 10,
+            hp: 10,
+            defense: 4,
+            power: 2,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -594,10 +675,34 @@ fn loot_milk(ecs: &mut World, owner: Entity) {
         .insert(owner, DropsLoot { item: l });
 }
 
+fn loot_egg(ecs: &mut World, owner: Entity) {
+    let l = ecs
+        .create_entity()
+        .with(InBackpack { owner })
+        .with(Renderable {
+            glyph: rltk::to_cp437('0'),
+            fg: RGB::from_hex("#bbccbb").expect("hardcoded"),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 3,
+        })
+        .with(Name {
+            name: "EGG".to_string(),
+        })
+        .with(Item {})
+        .with(ProvidesHealing { heal_amount: 10 })
+        .with(ProvidesFood {})
+        .with(Consumable {})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+    let _ = ecs
+        .write_storage::<DropsLoot>()
+        .insert(owner, DropsLoot { item: l });
+}
+
 fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("FRIENDLY CROW", 2)
-        .add("FRIENDLY EAGLE", 1)
+        .add("FRIENDLY EAGLE", std::cmp::max(0, map_depth - 3))
         .add("HEALING HERBS", 10)
         .add("GOODBERRY", 4)
         .add("SPARKLING POWDER", 1 + map_depth)
@@ -622,6 +727,8 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("OSTRICH", 2 + map_depth * 2)
         .add("GHOST", map_depth)
         .add("DILOPHOSAURUS", map_depth)
+        .add("REY", map_depth / 2)
+        .add("PEPPERMINT WHOPPER", map_depth / 2)
 }
 
 fn nest_table(map_depth: i32) -> RandomTable {
