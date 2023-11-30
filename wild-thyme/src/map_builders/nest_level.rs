@@ -8,7 +8,7 @@ use crate::{
         apply_horizontal_tunnel, apply_room_to_map, apply_vertical_tunnel, release_floor_drunk,
     },
     rect::Rect,
-    spawner,
+    spawners,
 };
 
 use super::MapBuilder;
@@ -32,14 +32,14 @@ impl MapBuilder for NestLevelBuilder {
 
     fn spawn_entities(&mut self, ecs: &mut World) {
         let nest_room = self.map.rooms[1];
-        spawner::spawn_nest_room(ecs, &nest_room, self.depth);
+        spawners::spawn_nest_room(ecs, &nest_room, self.depth);
         let stairs_room = self.map.rooms[2];
-        spawner::spawn_treeportal(ecs, &stairs_room);
+        spawners::spawn_treeportal(ecs, &stairs_room);
         for point in &self.drunk_spawns {
-            spawner::spawn_random_on_point(ecs, *point, self.depth);
+            spawners::spawn_random_on_point(ecs, *point, self.depth);
         }
         for room in self.map.rooms.iter().skip(2) {
-            spawner::spawn_room(ecs, room, self.depth);
+            spawners::spawn_room(ecs, room, self.depth);
         }
     }
 

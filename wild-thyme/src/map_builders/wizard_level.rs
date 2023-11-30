@@ -9,7 +9,7 @@ use crate::{
     map_builders::common::apply_room_to_map,
     random_table::RandomTable,
     rect::Rect,
-    spawner::{self, spawn_specific_on_point},
+    spawners::{self, spawn_specific_on_point},
 };
 
 use super::{common::release_drunk, MapBuilder};
@@ -59,7 +59,7 @@ impl MapBuilder for WizardLevelBuilder {
     }
 
     fn spawn_entities(&mut self, ecs: &mut World) {
-        spawner::npc(
+        spawners::npc(
             ecs,
             40,
             18,
@@ -78,7 +78,7 @@ impl MapBuilder for WizardLevelBuilder {
                 "only a sense of PRIDE and SATISFACTION beyond here".to_string(),
             ],
         );
-        spawner::spawn_treeportal(ecs, &self.portal_room);
+        spawners::spawn_treeportal(ecs, &self.portal_room);
 
         let spawn_table = RandomTable::new()
             .add("BERRY BUSH", 10)

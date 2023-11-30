@@ -17,6 +17,7 @@ use stats::*;
 mod gamelog;
 mod gui;
 mod inventory_system;
+mod spawners;
 use inventory_system::*;
 mod hunger_system;
 mod menu;
@@ -26,7 +27,6 @@ mod random_table;
 mod rex_assets;
 mod saveload_system;
 mod spawn_system;
-mod spawner;
 mod trigger_system;
 
 pub mod map_builders;
@@ -149,7 +149,7 @@ impl GameState for State {
                     }
                 }
                 for new_spawn in requests {
-                    spawner::spawn_specific_on_point(
+                    spawners::spawn_specific_on_point(
                         &mut self.ecs,
                         (new_spawn.x, new_spawn.y),
                         &new_spawn.spawn_name,
@@ -454,7 +454,7 @@ impl State {
     }
 
     fn reset_game(&mut self) {
-        let player_entity = spawner::player(&mut self.ecs, 0, 0);
+        let player_entity = spawners::player(&mut self.ecs, 0, 0);
         self.ecs.insert(player_entity);
         self.ecs.insert(Stats::new());
         self.ecs.insert(Map::new(1));

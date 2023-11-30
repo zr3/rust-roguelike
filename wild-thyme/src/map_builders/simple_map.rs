@@ -6,7 +6,7 @@ use crate::{
     map::{Map, TileType},
     map_builders::common::{apply_horizontal_tunnel, apply_room_to_map, apply_vertical_tunnel},
     rect::Rect,
-    spawner,
+    spawners,
 };
 
 use super::MapBuilder;
@@ -29,7 +29,7 @@ impl MapBuilder for SimpleMapBuilder {
 
     fn spawn_entities(&mut self, ecs: &mut World) {
         for room in self.map.rooms.iter().skip(1) {
-            spawner::spawn_room(ecs, room, self.depth);
+            spawners::spawn_room(ecs, room, self.depth);
         }
     }
 

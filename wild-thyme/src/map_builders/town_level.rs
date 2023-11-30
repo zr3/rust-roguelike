@@ -6,7 +6,7 @@ use crate::{
     map::{Map, TileType},
     map_builders::common::{apply_horizontal_tunnel, apply_room_to_map},
     rect::Rect,
-    spawner,
+    spawners,
 };
 
 use super::{
@@ -76,7 +76,7 @@ impl MapBuilder for TownLevelBuilder {
     }
 
     fn spawn_entities(&mut self, ecs: &mut World) {
-        spawner::npc(
+        spawners::npc(
             ecs,
             40,
             18,
@@ -96,7 +96,7 @@ impl MapBuilder for TownLevelBuilder {
             ],
         );
         let cake_center = self.cake_room.center();
-        spawner::npc(
+        spawners::npc(
             ecs,
             cake_center.0 - 1,
             cake_center.1,
@@ -109,7 +109,7 @@ impl MapBuilder for TownLevelBuilder {
                 "my TASTE is absolutely exquisite".to_string(),
             ],
         );
-        spawner::npc(
+        spawners::npc(
             ecs,
             cake_center.0 + 1,
             cake_center.1,
@@ -121,7 +121,7 @@ impl MapBuilder for TownLevelBuilder {
                 "we will JUDGE your CAKE when the time comes!".to_string(),
             ],
         );
-        spawner::npc(
+        spawners::npc(
             ecs,
             cake_center.0,
             cake_center.1 + 1,
@@ -139,7 +139,7 @@ impl MapBuilder for TownLevelBuilder {
                 "THYME will bring it all together".to_string(),
             ],
         );
-        spawner::spawn_treeportal(ecs, &self.portal_room);
+        spawners::spawn_treeportal(ecs, &self.portal_room);
     }
 
     fn get_map(&mut self) -> Map {
