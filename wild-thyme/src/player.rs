@@ -1,5 +1,8 @@
 use crate::{
-    components::{Confusion, EntityMoved, HungerClock, HungerState, Monster},
+    calculate_cake,
+    components::{
+        CakeIngredient, Confusion, EntityMoved, GoodThyme, HungerClock, HungerState, Monster,
+    },
     map::TileType,
     particle_system::ParticleBuilder,
     stats::Stats,
@@ -118,6 +121,21 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                         return RunState::NextLevel {
                             level: gs.ecs.fetch::<Map>().depth + 1,
                         };
+                    } else if try_place_ingredient(&mut gs.ecs) {
+                        let log = &mut gs.ecs.fetch_mut::<GameLog>().entries;
+                        log.push("[d]rop an item here to use it in your cake!".to_string());
+                    } else if try_judge_cake(&mut gs.ecs) {
+                        calculate_cake(&mut gs.ecs);
+                        let log = &mut gs.ecs.fetch_mut::<GameLog>().entries;
+                        log.push(format!(""));
+                        log.push(format!(""));
+                        log.push(format!(""));
+                        log.push(format!(""));
+                        log.push("you did it! the cake is baking..".to_string());
+                        return RunState::CakeReveal {
+                            row: 0,
+                            iteration: 0,
+                        };
                     } else {
                         skip_turn(&mut gs.ecs);
                     }
@@ -175,6 +193,53 @@ fn try_next_level(ecs: &mut World) -> bool {
     let map = ecs.fetch::<Map>();
     let player_idx = map.xy_idx(player_pos.x, player_pos.y);
     map.tiles[player_idx] == TileType::DownStairs
+}
+
+fn try_place_ingredient(ecs: &mut World) -> bool {
+    let player_pos = ecs.fetch::<Point>();
+    let map = ecs.fetch::<Map>();
+    let player_idx = map.xy_idx(player_pos.x, player_pos.y);
+    map.tiles[player_idx] == TileType::IngredientTable
+}
+
+fn try_judge_cake(ecs: &mut World) -> bool {
+    let log = &mut ecs.fetch_mut::<GameLog>().entries;
+    let player_pos = ecs.fetch::<Point>();
+    let map = ecs.fetch::<Map>();
+    let player_idx = map.xy_idx(player_pos.x, player_pos.y);
+    if map.tiles[player_idx] != TileType::JudgeCake {
+        return false;
+    }
+    let good_thymes = ecs.read_storage::<GoodThyme>();
+    let positions = ecs.read_storage::<Position>();
+    if !(&good_thymes, &positions)
+        .join()
+        .any(|(_, pos)| map.tiles[map.xy_idx(pos.x, pos.y)] == TileType::IngredientTable)
+    {
+        log.push(format!(
+            "[d]rop your CAKE INGREDIENTS on the pedestals above.."
+        ));
+        log.push(format!(
+            "some GOOD THYME is needed for a cake before it can be judged!"
+        ));
+        return false;
+    }
+    let ingredients = ecs.read_storage::<CakeIngredient>();
+    let num_ingredients = (&ingredients, &positions).join().fold(0, |acc, (_, pos)| {
+        if map.tiles[map.xy_idx(pos.x, pos.y)] != TileType::IngredientTable {
+            return acc;
+        } else {
+            return acc + 1;
+        }
+    });
+    if num_ingredients < 3 {
+        log.push(format!(
+            "[d]rop your CAKE INGREDIENTS on the pedestals above.."
+        ));
+        log.push(format!("a good CAKE needs at least 3 INGREDIENTS!"));
+        return false;
+    }
+    return true;
 }
 
 fn get_item(ecs: &mut World) -> bool {

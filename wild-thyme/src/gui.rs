@@ -585,3 +585,68 @@ pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
         Some(_) => GameOverResult::NoSelection,
     }
 }
+
+pub fn cake_judge(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
+    ctx.print_color_centered(
+        7,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        "you baked...",
+    );
+    ctx.print_color_centered(
+        9,
+        RGB::named(rltk::PALE_GREEN),
+        RGB::named(rltk::BLACK),
+        stats.cake.description.to_string(),
+    );
+
+    print_stat(ctx, 12, "overall", stats.cake.overall_points);
+    print_stat(ctx, 13, "moistness", stats.cake.moist_points);
+    print_stat(ctx, 14, "sweetness", stats.cake.sweet_points);
+    print_stat(ctx, 15, "style", stats.cake.style_points);
+    print_stat(ctx, 16, "spiciness", stats.cake.hot_points);
+    print_stat(ctx, 17, "moldiness", stats.cake.mold_points);
+    print_stat(ctx, 18, "edible?", stats.cake.edible_points);
+
+    print_stat(ctx, 20, "deepest level", stats.deepest_level);
+    print_stat(ctx, 21, "THYME eaten", stats.thyme_eaten);
+    print_stat(ctx, 22, "minimum hp", stats.min_hp);
+    print_stat(ctx, 23, "things killed", stats.mobs_killed);
+    print_stat(ctx, 24, "portals taken", stats.portals_taken);
+    print_stat(ctx, 25, "traps triggered", stats.traps_triggered);
+    print_stat(ctx, 26, "steps taken", stats.steps_taken);
+
+    ctx.print_color_centered(
+        36,
+        RGB::named(rltk::PALE_GREEN),
+        RGB::named(rltk::BLACK),
+        "YUMMMM THANKS FOR PLAYING!",
+    );
+    ctx.print_color_centered(
+        32,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        "baking can be quite the adventure,",
+    );
+    ctx.print_color_centered(
+        33,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        "and we had a wild thyme.",
+    );
+
+    ctx.draw_box(
+        0,
+        43,
+        79,
+        6,
+        RGB::named(rltk::BLACK),
+        RGB::named(rltk::BLACK),
+    );
+
+    match ctx.key {
+        None => GameOverResult::NoSelection,
+        Some(rltk::VirtualKeyCode::Return) => GameOverResult::QuitToMenu,
+        Some(_) => GameOverResult::NoSelection,
+    }
+}

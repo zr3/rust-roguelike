@@ -49,7 +49,11 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 - L11: the wizard
 
 ✔️ m2: town with npcs
-m3: ui, story and outer loop
-m4: narrator
-m5: web site
+
+  m3: ui, story and outer loop
+- pass to fix colors and glyphs
+
+  m4: narrator
+
+  m5: website
 

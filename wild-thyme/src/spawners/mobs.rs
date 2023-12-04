@@ -161,6 +161,7 @@ pub fn rey(ecs: &mut World, x: i32, y: i32) {
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
+    dart_gun(ecs, x, y);
 }
 
 pub fn pep(ecs: &mut World, x: i32, y: i32) {
@@ -200,6 +201,7 @@ pub fn pep(ecs: &mut World, x: i32, y: i32) {
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
+    cake_knife(ecs, x, y);
 }
 
 fn creature<S: ToString>(

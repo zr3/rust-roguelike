@@ -14,6 +14,7 @@ pub enum TileType {
     Floor,
     DownStairs,
     IngredientTable,
+    JudgeCake,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone)]
@@ -109,6 +110,10 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                     glyph = rltk::to_cp437('Ö');
                 }
                 TileType::IngredientTable => {
+                    fg = RGB::from_hex("#904070").expect("hardcoded");
+                    glyph = rltk::to_cp437('O'); // wall_glyph(&*map, x, y);
+                }
+                TileType::JudgeCake => {
                     fg = RGB::from_hex("#904070").expect("hardcoded");
                     glyph = rltk::to_cp437('░'); // wall_glyph(&*map, x, y);
                 }

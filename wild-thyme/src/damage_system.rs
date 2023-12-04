@@ -19,11 +19,22 @@ impl<'a> System<'a> for DamageSystem {
         Entities<'a>,
         ReadStorage<'a, DropsLoot>,
         WriteStorage<'a, WantsToDropItem>,
+        WriteExpect<'a, Stats>,
+        ReadStorage<'a, Player>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage, positions, mut map, entities, drops_loot, mut wants_to_drop) =
-            data;
+        let (
+            mut stats,
+            mut damage,
+            positions,
+            mut map,
+            entities,
+            drops_loot,
+            mut wants_to_drop,
+            mut game_stats,
+            players,
+        ) = data;
 
         for (entity, mut stats, damage) in (&entities, &mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
@@ -36,6 +47,9 @@ impl<'a> System<'a> for DamageSystem {
                 if let Some(loot) = drops_loot.get(entity) {
                     let _ = wants_to_drop.insert(entity, WantsToDropItem { item: loot.item });
                 }
+            }
+            if let Some(_) = players.get(entity) {
+                game_stats.min_hp = std::cmp::min(game_stats.min_hp, stats.hp);
             }
         }
 

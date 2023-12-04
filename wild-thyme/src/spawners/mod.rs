@@ -8,7 +8,7 @@ use crate::map::MAPWIDTH;
 use crate::random_table::RandomTable;
 use crate::rect::Rect;
 
-mod items;
+pub mod items;
 use items::*;
 mod mobs;
 use mobs::*;
@@ -69,7 +69,7 @@ pub fn spawn_specific_on_point(ecs: &mut World, point: (i32, i32), spawnable: &S
         "GOODBERRY" => goodberry(ecs, x, y),
         "GOOD THYME" => thyme(ecs, x, y),
         "WEIRD CONFUSING POWDER" => confusion_scroll(ecs, x, y),
-        "SPARKLING POWDER" => fireball_scroll(ecs, x, y),
+        "SPARKLING POWDER" => sparkling_powder(ecs, x, y),
 
         "BEAR TRAP" => bear_trap(ecs, x, y),
         "PITFALL" => pitfall(ecs, x, y),

@@ -89,7 +89,8 @@ pub fn save_game(ecs: &mut World) {
             TeleportsPlayer,
             Quips,
             Backpack,
-            GoodThyme // new component register here
+            GoodThyme,
+            CakeIngredient // new component register here
         );
     }
 
@@ -190,7 +191,8 @@ pub fn load_game(ecs: &mut World) {
             TeleportsPlayer,
             Quips,
             Backpack,
-            GoodThyme // new component register here
+            GoodThyme,
+            CakeIngredient // new component register here
         );
     }
 

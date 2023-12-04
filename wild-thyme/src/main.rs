@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use hunger_system::HungerSystem;
 use rltk::{GameState, Point, Rltk};
 use spawn_system::{SpawnBuilder, SpawnRequest};
@@ -68,6 +70,11 @@ pub enum RunState {
         row: i32,
         iteration: i32,
     },
+    CakeReveal {
+        row: i32,
+        iteration: i32,
+    },
+    CakeJudge,
 }
 
 pub struct State {
@@ -335,6 +342,40 @@ impl GameState for State {
                     };
                 }
             }
+            RunState::CakeReveal { row, iteration } => {
+                let mut map = self.ecs.fetch_mut::<Map>();
+                for x in (0..MAPWIDTH as i32).filter(|x| ((x + row) % 2) == iteration) {
+                    let idx = map.xy_idx(x as i32, row);
+                    map.revealed_tiles[idx] = false;
+                }
+                if row as usize == MAPHEIGHT - 1 {
+                    if iteration == 1 {
+                        newrunstate = RunState::CakeJudge;
+                    } else {
+                        newrunstate = RunState::CakeReveal {
+                            row: 0,
+                            iteration: iteration + 1,
+                        };
+                    }
+                } else {
+                    newrunstate = RunState::CakeReveal {
+                        row: row + 1,
+                        iteration,
+                    };
+                }
+            }
+            RunState::CakeJudge => {
+                let result = gui::cake_judge(ctx, &self.ecs.fetch::<Stats>());
+                match result {
+                    gui::GameOverResult::NoSelection => {}
+                    gui::GameOverResult::QuitToMenu => {
+                        self.game_over_cleanup();
+                        newrunstate = RunState::MainMenu {
+                            menu_selection: gui::MainMenuSelection::NewGame,
+                        };
+                    }
+                }
+            }
         }
 
         {
@@ -345,6 +386,43 @@ impl GameState for State {
         delete_the_dead(&mut self.ecs);
     }
 }
+
+fn calculate_cake(ecs: &mut World) {
+    let mut stats = ecs.fetch_mut::<Stats>();
+    let map = ecs.fetch::<Map>();
+    let ingredients = ecs.read_storage::<CakeIngredient>();
+    let positions = ecs.read_storage::<Position>();
+    let mut used_adjectives = HashMap::new();
+    for (ingredient, pos) in (&ingredients, &positions).join() {
+        if map.tiles[map.xy_idx(pos.x, pos.y)] != TileType::IngredientTable {
+            continue;
+        }
+        // add ingredient to cake
+        if !used_adjectives.contains_key(&ingredient.adjective) {
+            used_adjectives.insert(&ingredient.adjective, 1);
+            stats.cake.description = format!("{} {}", stats.cake.description, ingredient.adjective);
+        } else if *used_adjectives
+            .get(&ingredient.adjective)
+            .expect("validated")
+            < 2
+        {
+            *used_adjectives
+                .get_mut(&ingredient.adjective)
+                .expect("validated") = 2;
+            stats.cake.description =
+                format!("{} {}", stats.cake.description, ingredient.super_adjective);
+        }
+        stats.cake.overall_points += ingredient.overall_points;
+        stats.cake.moist_points += ingredient.moist_points;
+        stats.cake.sweet_points += ingredient.sweet_points;
+        stats.cake.style_points += ingredient.style_points;
+        stats.cake.hot_points += ingredient.hot_points;
+        stats.cake.mold_points += ingredient.mold_points;
+        stats.cake.edible_points += ingredient.edible_points;
+    }
+    stats.cake.description = format!("a{} cake!", stats.cake.description);
+}
+
 impl State {
     fn run_systems(&mut self) {
         let mut vis = VisibilitySystem {};
@@ -559,6 +637,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Quips>();
     gs.ecs.register::<Backpack>();
     gs.ecs.register::<GoodThyme>();
+    gs.ecs.register::<CakeIngredient>();
     // new component register here
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());

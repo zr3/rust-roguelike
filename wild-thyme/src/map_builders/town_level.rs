@@ -21,6 +21,7 @@ pub struct TownLevelBuilder {
     pond_room: Rect,
     cake_room: Rect,
     portal_room: Rect,
+    secret_room: Rect,
 }
 
 impl MapBuilder for TownLevelBuilder {
@@ -53,9 +54,10 @@ impl MapBuilder for TownLevelBuilder {
 
         self.cake_room = Rect::new(30, 30, 15, 10);
         apply_room_to_map(&mut self.map, &self.cake_room);
+        apply_tile_to_map(&mut self.map, &Rect::new(35, 37, 5, 2), TileType::JudgeCake);
         apply_tile_to_map(
             &mut self.map,
-            &Rect::new(35, 35, 5, 2),
+            &Rect::new(35, 35, 5, 1),
             TileType::IngredientTable,
         );
         self.map.rooms.push(self.cake_room);
@@ -67,6 +69,10 @@ impl MapBuilder for TownLevelBuilder {
         let start_center = self.portal_room.center();
         let start_center_idx = self.map.xy_idx(start_center.0, start_center.1);
         self.map.tiles[start_center_idx] = TileType::DownStairs;
+
+        self.secret_room = Rect::new(1, 20, 10, 5);
+        apply_room_to_map(&mut self.map, &self.secret_room);
+        apply_horizontal_tunnel(&mut self.map, 1, 13, 20);
 
         let start = self.start_room.center();
         self.starting_position = Position {
@@ -140,6 +146,42 @@ impl MapBuilder for TownLevelBuilder {
             ],
         );
         spawners::spawn_treeportal(ecs, &self.portal_room);
+
+        // spawn doubled secret room items, (1, 20) to (11, 25)
+        spawners::items::cake_knife(ecs, 3, 20);
+        spawners::items::cake_knife(ecs, 3, 20);
+        spawners::items::bark_armor(ecs, 4, 20);
+        spawners::items::bark_armor(ecs, 4, 20);
+        spawners::items::healing_herbs(ecs, 5, 20);
+        spawners::items::healing_herbs(ecs, 5, 20);
+        spawners::items::pos_meat(ecs, 6, 20);
+        spawners::items::pos_meat(ecs, 6, 20);
+        spawners::items::pos_milk(ecs, 7, 20);
+        spawners::items::pos_milk(ecs, 7, 20);
+        spawners::items::pos_egg(ecs, 8, 20);
+        spawners::items::pos_egg(ecs, 8, 20);
+        spawners::items::pointy_stick(ecs, 9, 20);
+        spawners::items::pointy_stick(ecs, 9, 20);
+
+        spawners::items::mushroom(ecs, 3, 21, "TEST".to_string(), -10, 30);
+        spawners::items::mushroom(ecs, 3, 21, "TEST".to_string(), -10, 30);
+        spawners::items::friendly_crow(ecs, 4, 21);
+        spawners::items::friendly_crow(ecs, 4, 21);
+        spawners::items::friendly_eagle(ecs, 5, 21);
+        spawners::items::friendly_eagle(ecs, 5, 21);
+        spawners::items::goodberry(ecs, 6, 21);
+        spawners::items::goodberry(ecs, 6, 21);
+        spawners::items::thyme(ecs, 7, 21);
+        spawners::items::thyme(ecs, 7, 21);
+
+        spawners::items::rock(ecs, 3, 22);
+        spawners::items::rock(ecs, 3, 22);
+        spawners::items::dart_gun(ecs, 4, 22);
+        spawners::items::dart_gun(ecs, 4, 22);
+        spawners::items::sparkling_powder(ecs, 5, 22);
+        spawners::items::sparkling_powder(ecs, 5, 22);
+        spawners::items::confusion_scroll(ecs, 6, 22);
+        spawners::items::confusion_scroll(ecs, 6, 22);
     }
 
     fn get_map(&mut self) -> Map {
@@ -160,6 +202,7 @@ impl TownLevelBuilder {
             pond_room: Rect::new(0, 0, 0, 0),
             cake_room: Rect::new(0, 0, 0, 0),
             portal_room: Rect::new(0, 0, 0, 0),
+            secret_room: Rect::new(0, 0, 0, 0),
         }
     }
 }
