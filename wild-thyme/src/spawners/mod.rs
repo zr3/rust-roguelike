@@ -10,7 +10,7 @@ use crate::rect::Rect;
 
 pub mod items;
 use items::*;
-mod mobs;
+pub mod mobs;
 use mobs::*;
 mod traps;
 use traps::*;

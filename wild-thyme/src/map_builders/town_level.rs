@@ -1,8 +1,9 @@
 use rltk::{RandomNumberGenerator, RGB};
-use specs::World;
+use specs::saveload::*;
+use specs::*;
 
 use crate::{
-    components::Position,
+    components::{Name, Position, SerializeMe},
     map::{Map, TileType},
     map_builders::common::{apply_horizontal_tunnel, apply_room_to_map},
     rect::Rect,
@@ -21,7 +22,8 @@ pub struct TownLevelBuilder {
     pond_room: Rect,
     cake_room: Rect,
     portal_room: Rect,
-    secret_room: Rect,
+    secret_item_room: Rect,
+    secret_mob_room: Rect,
 }
 
 impl MapBuilder for TownLevelBuilder {
@@ -65,14 +67,18 @@ impl MapBuilder for TownLevelBuilder {
         self.portal_room = Rect::new(52, 20, 10, 6);
         apply_room_to_map(&mut self.map, &self.portal_room);
         apply_horizontal_tunnel(&mut self.map, 45, 52, 20);
+        apply_horizontal_tunnel(&mut self.map, 45, 52, 21);
         self.map.rooms.push(self.portal_room);
         let start_center = self.portal_room.center();
         let start_center_idx = self.map.xy_idx(start_center.0, start_center.1);
         self.map.tiles[start_center_idx] = TileType::DownStairs;
 
-        self.secret_room = Rect::new(1, 20, 10, 5);
-        apply_room_to_map(&mut self.map, &self.secret_room);
+        self.secret_item_room = Rect::new(1, 20, 10, 5);
+        apply_room_to_map(&mut self.map, &self.secret_item_room);
         apply_horizontal_tunnel(&mut self.map, 1, 13, 20);
+
+        self.secret_mob_room = Rect::new(1, 31, 8, 5);
+        apply_room_to_map(&mut self.map, &self.secret_mob_room);
 
         let start = self.start_room.center();
         self.starting_position = Position {
@@ -95,6 +101,7 @@ impl MapBuilder for TownLevelBuilder {
                 "...".to_string(),
                 "I heard ancient lizards don't like ROCKS..".to_string(),
                 "FRIENDLY birds can help a person out..".to_string(),
+                "an EAGLE will help take you back here! you can pick them up.".to_string(),
                 "walk around enough, you'll see some TRAPS out there".to_string(),
                 "I'll give you something great if you can find me THYME!".to_string(),
                 "TREE PORTALS will get you deeper into the forest..".to_string(),
@@ -145,6 +152,20 @@ impl MapBuilder for TownLevelBuilder {
                 "THYME will bring it all together".to_string(),
             ],
         );
+        ecs.create_entity()
+            .with(Position { x: 38, y: 36 })
+            .with(Name {
+                name: "CAKE INGREDIENT TABLES".to_string(),
+            })
+            .marked::<SimpleMarker<SerializeMe>>()
+            .build();
+        ecs.create_entity()
+            .with(Position { x: 38, y: 38 })
+            .with(Name {
+                name: "CAKE JUDGING STAGE".to_string(),
+            })
+            .marked::<SimpleMarker<SerializeMe>>()
+            .build();
         spawners::spawn_treeportal(ecs, &self.portal_room);
 
         // spawn doubled secret room items, (1, 20) to (11, 25)
@@ -182,6 +203,26 @@ impl MapBuilder for TownLevelBuilder {
         spawners::items::sparkling_powder(ecs, 5, 22);
         spawners::items::confusion_scroll(ecs, 6, 22);
         spawners::items::confusion_scroll(ecs, 6, 22);
+
+        // spawn secret mob room, (1, 31) to (8, 36)
+        spawners::mobs::mosquito(ecs, 3, 32);
+        spawners::mobs::spider(ecs, 4, 32);
+        spawners::mobs::ghost(ecs, 5, 32);
+        spawners::mobs::sparrow(ecs, 6, 32);
+        spawners::mobs::ostrich(ecs, 7, 32);
+
+        spawners::mobs::dilophosaurus(ecs, 3, 33);
+
+        spawners::mobs::rey(ecs, 3, 34);
+        spawners::mobs::pep(ecs, 4, 34);
+
+        spawners::mobs::deer(ecs, 3, 35);
+        spawners::mobs::squirrel(ecs, 4, 35);
+        spawners::mobs::frog(ecs, 5, 35);
+        spawners::mobs::butterfly(ecs, 6, 35);
+
+        spawners::mobs::goat(ecs, 3, 36);
+        spawners::mobs::cow(ecs, 4, 36);
     }
 
     fn get_map(&mut self) -> Map {
@@ -202,7 +243,8 @@ impl TownLevelBuilder {
             pond_room: Rect::new(0, 0, 0, 0),
             cake_room: Rect::new(0, 0, 0, 0),
             portal_room: Rect::new(0, 0, 0, 0),
-            secret_room: Rect::new(0, 0, 0, 0),
+            secret_item_room: Rect::new(0, 0, 0, 0),
+            secret_mob_room: Rect::new(0, 0, 0, 0),
         }
     }
 }

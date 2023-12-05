@@ -12,6 +12,14 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
     let assets = gs.ecs.fetch::<RexAssets>();
     ctx.render_xp_sprite(&assets.menu, 0, 0);
 
+    ctx.draw_box(
+        20,
+        14,
+        39,
+        2,
+        RGB::from_hex("#808030").expect("hardcoded"),
+        RGB::named(rltk::BLACK),
+    );
     ctx.print_color_centered(
         15,
         RGB::named(rltk::BURLYWOOD),
@@ -19,6 +27,14 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
         "And We Had a Wild Thyme",
     );
 
+    ctx.draw_box(
+        30,
+        23,
+        19,
+        4,
+        RGB::from_hex("#808030").expect("hardcoded"),
+        RGB::named(rltk::BLACK),
+    );
     if let RunState::MainMenu {
         menu_selection: selection,
     } = *runstate
@@ -26,7 +42,7 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
         if selection == MainMenuSelection::NewGame {
             ctx.print_color_centered(
                 24,
-                RGB::named(rltk::GREEN_YELLOW),
+                RGB::from_hex("#70e0a0").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
                 "new game",
             );

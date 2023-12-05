@@ -7,8 +7,8 @@ pub fn rock(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::GREY),
+            glyph: rltk::to_cp437('o'),
+            fg: RGB::from_hex("#9090a0").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -38,8 +38,8 @@ pub fn dart_gun(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::SADDLE_BROWN),
+            glyph: rltk::to_cp437('/'),
+            fg: RGB::from_hex("#a090e0").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -57,8 +57,8 @@ pub fn sparkling_powder(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::ORANGE),
+            glyph: rltk::to_cp437('☼'),
+            fg: RGB::from_hex("#a07020").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -89,8 +89,8 @@ pub fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::PURPLE),
+            glyph: rltk::to_cp437('☼'),
+            fg: RGB::from_hex("#7040a0").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -121,7 +121,7 @@ pub fn healing_herbs(ecs: &mut World, x: i32, y: i32) {
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('%'),
-            fg: RGB::named(rltk::LIME_GREEN),
+            fg: RGB::from_hex("#70c0a0").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 3,
         })
@@ -167,7 +167,7 @@ pub fn meat(ecs: &mut World) -> Entity {
     ecs.create_entity()
         .with(Renderable {
             glyph: rltk::to_cp437('%'),
-            fg: RGB::named(rltk::ORANGE_RED),
+            fg: RGB::from_hex("#c07070").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 3,
         })
@@ -212,7 +212,7 @@ pub fn pos_milk(ecs: &mut World, x: i32, y: i32) {
 pub fn milk(ecs: &mut World) -> Entity {
     ecs.create_entity()
         .with(Renderable {
-            glyph: rltk::to_cp437('%'),
+            glyph: rltk::to_cp437('¿'),
             fg: RGB::from_hex("#d0d0c0").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 3,
@@ -291,7 +291,7 @@ pub fn pointy_stick(ecs: &mut World, x: i32, y: i32) {
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('/'),
-            fg: RGB::named(rltk::BROWN1),
+            fg: RGB::from_hex("#a08060").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -354,8 +354,8 @@ pub fn bark_armor(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('('),
-            fg: RGB::named(rltk::BROWN1),
+            glyph: rltk::to_cp437('╦'),
+            fg: RGB::from_hex("#a08060").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -416,8 +416,8 @@ pub fn thyme(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('%'),
-            fg: RGB::named(rltk::LIME_GREEN),
+            glyph: rltk::to_cp437('¥'),
+            fg: RGB::from_hex("#70e0a0").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -454,7 +454,7 @@ pub fn mushroom(ecs: &mut World, x: i32, y: i32, name: String, low_hp: i32, high
         .with(Position { x, y })
         .with(Renderable {
             glyph: rltk::to_cp437('♣'),
-            fg: RGB::from_hex("#696040").expect("hardcoded"),
+            fg: RGB::from_hex("#996040").expect("hardcoded"),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
@@ -486,7 +486,7 @@ pub fn friendly_crow(ecs: &mut World, x: i32, y: i32) {
         .with(Renderable {
             glyph: rltk::to_cp437('ç'),
             fg: RGB::named(rltk::BLACK),
-            bg: RGB::named(rltk::WHITE),
+            bg: RGB::from_hex("#707090").expect("hardcoded"),
             render_order: 2,
         })
         .with(Name {
@@ -516,7 +516,7 @@ pub fn friendly_eagle(ecs: &mut World, x: i32, y: i32) {
         .with(Renderable {
             glyph: rltk::to_cp437('ë'),
             fg: RGB::named(rltk::BLACK),
-            bg: RGB::named(rltk::WHITE),
+            bg: RGB::from_hex("#907080").expect("hardcoded"),
             render_order: 2,
         })
         .with(Name {

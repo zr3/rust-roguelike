@@ -58,6 +58,10 @@ pub enum RunState {
         range: i32,
         item: Entity,
     },
+    ShowTooltips {
+        current: i32,
+        total: i32,
+    },
     GameOver,
     MainMenu {
         menu_selection: gui::MainMenuSelection,
@@ -376,6 +380,19 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::ShowTooltips { current, total } => match ctx.key {
+                None => {}
+                Some(_) => {
+                    if current < total - 1 {
+                        newrunstate = RunState::ShowTooltips {
+                            current: current + 1,
+                            total,
+                        };
+                    } else {
+                        newrunstate = RunState::AwaitingInput;
+                    }
+                }
+            },
         }
 
         {
@@ -652,4 +669,20 @@ fn main() -> rltk::BError {
 
     // start main loop
     rltk::main_loop(context, gs)
+}
+
+pub fn get_visible_tooltips(ecs: &World) -> Vec<(Position, String)> {
+    let map = ecs.fetch::<Map>();
+    let names = ecs.read_storage::<Name>();
+    let positions = ecs.read_storage::<Position>();
+    let hidden = ecs.read_storage::<Hidden>();
+
+    let mut visible_tooltips = Vec::new();
+    for (name, pos, _hidden) in (&names, &positions, !&hidden).join() {
+        let idx = map.xy_idx(pos.x, pos.y);
+        if map.visible_tiles[idx] {
+            visible_tooltips.push((pos.clone(), name.name.to_string()));
+        }
+    }
+    visible_tooltips
 }

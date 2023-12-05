@@ -6,8 +6,9 @@ use crate::{
     components::{
         Backpack, CombatStats, Equipped, Hidden, HungerClock, HungerState, InBackpack, Viewshed,
     },
+    get_visible_tooltips,
     stats::Stats,
-    State,
+    RunState, State,
 };
 
 #[derive(PartialEq, Copy, Clone)]
@@ -30,7 +31,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         43,
         79,
         6,
-        RGB::named(rltk::WHITE),
+        RGB::from_hex("#c9c9c9").expect("hardcoded"),
         RGB::named(rltk::BLACK),
     );
 
@@ -54,7 +55,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         ctx.print_color(
             12,
             43,
-            RGB::named(rltk::GREEN_YELLOW),
+            RGB::from_hex("#70c0a0").expect("hardcoded"),
             RGB::named(rltk::BLACK),
             &health,
         );
@@ -64,7 +65,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             51,
             stats.hp,
             stats.max_hp,
-            RGB::named(rltk::DEEPPINK),
+            RGB::from_hex("#d08080").expect("hardcoded"),
             RGB::named(rltk::BLACK),
         );
 
@@ -72,7 +73,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             HungerState::Full => ctx.print_color(
                 70,
                 42,
-                RGB::named(rltk::LIMEGREEN),
+                RGB::from_hex("#70c0a0").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
                 "TUMMY FULL",
             ),
@@ -80,14 +81,14 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             HungerState::Hungry => ctx.print_color(
                 70,
                 42,
-                RGB::named(rltk::ORANGE),
+                RGB::from_hex("#e0c080").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
                 "HUNGRY....",
             ),
             HungerState::Starving => ctx.print_color(
                 70,
                 42,
-                RGB::named(rltk::DARK_RED),
+                RGB::from_hex("#e08080").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
                 "STARVING!!",
             ),
@@ -105,23 +106,45 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     }
 
     // mouse tooltips
-    draw_tooltips(ecs, ctx);
+    draw_mouse_tooltip(ecs, ctx);
+
+    // tab tooltips
+    let run_state = ecs.fetch::<RunState>();
+    match *run_state {
+        RunState::ShowTooltips { current, .. } => {
+            let tooltip = &get_visible_tooltips(ecs)[current as usize];
+            draw_tooltip_at_pos(ecs, ctx, (tooltip.0.x, tooltip.0.y));
+            ctx.print_color(
+                5,
+                0,
+                RGB::from_hex("#a07030").expect("hardcoded"),
+                RGB::named(rltk::BLACK),
+                "viewing tips (press any key..):",
+            );
+        }
+        _ => {}
+    }
 }
 
-fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
+fn draw_mouse_tooltip(ecs: &World, ctx: &mut Rltk) {
+    let map = ecs.fetch::<Map>();
+    let mouse_pos = ctx.mouse_pos();
+    if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height {
+        return;
+    }
+    draw_tooltip_at_pos(ecs, ctx, mouse_pos);
+}
+
+fn draw_tooltip_at_pos(ecs: &World, ctx: &mut Rltk, pos: (i32, i32)) {
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
     let hidden = ecs.read_storage::<Hidden>();
 
-    let mouse_pos = ctx.mouse_pos();
-    if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height {
-        return;
-    }
     let mut tooltip: Vec<String> = Vec::new();
     for (name, position, _hidden) in (&names, &positions, !&hidden).join() {
         let idx = map.xy_idx(position.x, position.y);
-        if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
+        if position.x == pos.0 && position.y == pos.1 && map.visible_tiles[idx] {
             tooltip.push(name.name.to_string());
         }
     }
@@ -135,10 +158,10 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         }
         width += 3;
 
-        if mouse_pos.0 > 40 {
-            let arrow_pos = Point::new(mouse_pos.0 - 2, mouse_pos.1);
-            let left_x = mouse_pos.0 - width;
-            let mut y = mouse_pos.1;
+        if pos.0 > 40 {
+            let arrow_pos = Point::new(pos.0 - 2, pos.1);
+            let left_x = pos.0 - width;
+            let mut y = pos.1;
             for s in tooltip.iter() {
                 ctx.print_color(
                     left_x,
@@ -167,9 +190,9 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 &"->".to_string(),
             );
         } else {
-            let arrow_pos = Point::new(mouse_pos.0 + 1, mouse_pos.1);
-            let left_x = mouse_pos.0 + 3;
-            let mut y = mouse_pos.1;
+            let arrow_pos = Point::new(pos.0 + 1, pos.1);
+            let left_x = pos.0 + 3;
+            let mut y = pos.1;
             for s in tooltip.iter() {
                 ctx.print_color(left_x + 1, y, RGB::named(rltk::WHITE), rltk::BLACK, s);
                 let padding = (width - s.len() as i32) - 1;
@@ -498,7 +521,7 @@ pub fn ranged_target(
     ctx.print_color(
         5,
         0,
-        RGB::named(rltk::YELLOW),
+        RGB::from_hex("#a07030").expect("hardcoded"),
         RGB::named(rltk::BLACK),
         "[CLICK] on target (or an empty space to cancel):",
     );
@@ -509,7 +532,7 @@ pub fn ranged_target(
         for idx in visible.visible_tiles.iter() {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(*player_pos, *idx);
             if distance <= range as f32 {
-                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::DARK_CYAN));
+                ctx.set_bg(idx.x, idx.y, RGB::from_hex("#204050").expect("hardcoded"));
                 available_cells.push(idx);
             }
         }
@@ -560,7 +583,7 @@ fn print_stat(ctx: &mut Rltk, line: i32, stat: &str, stat_value: i32) {
 pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
     ctx.print_color_centered(
         15,
-        RGB::named(rltk::RED),
+        RGB::from_hex("#e04040").expect("hardcoded"),
         RGB::named(rltk::BLACK),
         "OH NO YOU DIED!!",
     );
@@ -573,10 +596,10 @@ pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
     print_stat(ctx, 22, "steps taken", stats.steps_taken);
 
     ctx.print_color_centered(
-        25,
+        27,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
-        "PRESS [ENTER]",
+        "press [ENTER] to try again",
     );
 
     match ctx.key {
@@ -595,7 +618,7 @@ pub fn cake_judge(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
     );
     ctx.print_color_centered(
         9,
-        RGB::named(rltk::PALE_GREEN),
+        RGB::from_hex("#70e0a0").expect("hardcoded"),
         RGB::named(rltk::BLACK),
         stats.cake.description.to_string(),
     );
@@ -618,7 +641,7 @@ pub fn cake_judge(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
 
     ctx.print_color_centered(
         36,
-        RGB::named(rltk::PALE_GREEN),
+        RGB::from_hex("#70e0a0").expect("hardcoded"),
         RGB::named(rltk::BLACK),
         "YUMMMM THANKS FOR PLAYING!",
     );

@@ -1,8 +1,10 @@
 use crate::{
     calculate_cake,
     components::{
-        CakeIngredient, Confusion, EntityMoved, GoodThyme, HungerClock, HungerState, Monster,
+        CakeIngredient, Confusion, EntityMoved, GoodThyme, Hidden, HungerClock, HungerState,
+        Monster, Name,
     },
+    get_visible_tooltips,
     map::TileType,
     particle_system::ParticleBuilder,
     stats::Stats,
@@ -110,9 +112,14 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::D => return RunState::ShowDropItem,
             VirtualKeyCode::R => return RunState::ShowRemoveItem,
 
-            VirtualKeyCode::Escape => return RunState::SaveGame,
+            VirtualKeyCode::Tab => {
+                return RunState::ShowTooltips {
+                    current: 0,
+                    total: get_visible_tooltips(&gs.ecs).len() as i32,
+                }
+            }
 
-            VirtualKeyCode::Period => {}
+            VirtualKeyCode::Escape => return RunState::SaveGame,
 
             VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
                 if !get_item(&mut gs.ecs) {

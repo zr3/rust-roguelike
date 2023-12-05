@@ -50,8 +50,7 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 
 ✔️ m2: town with npcs
 
-  m3: ui, story and outer loop
-- pass to fix colors and glyphs
+✔️ m3: ui, story and outer loop
 
   m4: narrator
 
