@@ -98,14 +98,14 @@ impl MapBuilder for TownLevelBuilder {
             vec![
                 "been dark out here lately...".to_string(),
                 "word is, there's good THYME deep in the forest".to_string(),
-                "...".to_string(),
                 "I heard ancient lizards don't like ROCKS..".to_string(),
                 "FRIENDLY birds can help a person out..".to_string(),
                 "an EAGLE will help take you back here! you can pick them up.".to_string(),
                 "walk around enough, you'll see some TRAPS out there".to_string(),
-                "I'll give you something great if you can find me THYME!".to_string(),
+                "go EAST to find ingredients in the forest!".to_string(),
                 "TREE PORTALS will get you deeper into the forest..".to_string(),
                 "don't get too HUNGRY...".to_string(),
+                "the GREAT BAKE OFF is to the SOUTH!...".to_string(),
             ],
         );
         let cake_center = self.cake_room.center();

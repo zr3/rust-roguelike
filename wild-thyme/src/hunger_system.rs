@@ -47,26 +47,25 @@ impl<'a> System<'a> for HungerSystem {
                             clock.state = HungerState::Normal;
                             clock.duration = 200;
                             if entity == *player_entity {
-                                log.entries.push("YOU are no longer well fed.".to_string());
+                                log.log("YOU are no longer well fed.".to_string());
                             }
                         }
                         HungerState::Normal => {
                             clock.state = HungerState::Hungry;
                             clock.duration = 200;
                             if entity == *player_entity {
-                                log.entries.push("YOU are hungry.".to_string());
+                                log.log("YOU are hungry.".to_string());
                             }
                         }
                         HungerState::Hungry => {
                             clock.state = HungerState::Starving;
                             if entity == *player_entity {
-                                log.entries.push("YOU are STARVING! :c".to_string());
+                                log.log("YOU are STARVING! :c".to_string());
                             }
                         }
                         HungerState::Starving => {
                             if entity == *player_entity {
-                                log.entries
-                                    .push("YOU feel pain from the hunger :c".to_string());
+                                log.log("YOU feel pain from the hunger :c".to_string());
                             }
                             SufferDamage::new_damage(&mut inflict_damage, entity, 1);
                         }

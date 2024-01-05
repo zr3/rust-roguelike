@@ -63,7 +63,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
 
             if pickup.collected_by == *player_entity {
                 if backpack_too_full {
-                    gamelog.entries.push(format!(
+                    gamelog.log(format!(
                         "YOUR backpack is full! YOU can't pick up the {}.",
                         names
                             .get(pickup.item)
@@ -71,7 +71,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
                             .name
                     ));
                 } else {
-                    gamelog.entries.push(format!(
+                    gamelog.log(format!(
                         "YOU pick up the {}.",
                         names
                             .get(pickup.item)
@@ -209,7 +209,7 @@ impl<'a> System<'a> for UseItemSystem {
                     if already_equipped.owner == target && already_equipped.slot == target_slot {
                         to_unequip.push(item_entity);
                         if target == *player_entity {
-                            gamelog.entries.push(format!("YOU unequip {}.", name.name));
+                            gamelog.log(format!("YOU unequip {}.", name.name));
                         }
                     }
                 }
@@ -238,7 +238,7 @@ impl<'a> System<'a> for UseItemSystem {
                 }
                 backpack_items.remove(used_item.item);
                 if target == *player_entity {
-                    gamelog.entries.push(format!(
+                    gamelog.log(format!(
                         "YOU equip {}.",
                         names
                             .get(used_item.item)
@@ -255,7 +255,7 @@ impl<'a> System<'a> for UseItemSystem {
                 Some(healer) => {
                     stats.hp = i32::min(stats.max_hp, stats.hp + healer.heal_amount);
                     if entity == *player_entity {
-                        gamelog.entries.push(format!(
+                        gamelog.log(format!(
                             "The {} healed {} hp!",
                             names.get(used_item.item).unwrap().name,
                             healer.heal_amount
@@ -289,7 +289,7 @@ impl<'a> System<'a> for UseItemSystem {
                             let mob_name = names.get(*mob).expect("targets should have name");
                             let item_name =
                                 names.get(used_item.item).expect("items should have name");
-                            gamelog.entries.push(format!(
+                            gamelog.log(format!(
                                 "YOU used {} on {}. {} damage!",
                                 item_name.name, mob_name.name, damage.damage
                             ));
@@ -326,7 +326,7 @@ impl<'a> System<'a> for UseItemSystem {
                                 let mob_name = names.get(*mob).expect("targets should have a name");
                                 let item_name =
                                     names.get(used_item.item).expect("items should have a name");
-                                gamelog.entries.push(format!(
+                                gamelog.log(format!(
                                     "YOU used {} on {}, and it is CONFUSED!",
                                     item_name.name, mob_name.name
                                 ));
@@ -364,7 +364,7 @@ impl<'a> System<'a> for UseItemSystem {
                         hc.state = HungerState::Full;
                         hc.duration = 20;
                         if entity == *player_entity {
-                            gamelog.entries.push(format!(
+                            gamelog.log(format!(
                                 "YOU feel satisfied and full after eating the {}",
                                 names.get(used_item.item).unwrap().name
                             ));
@@ -380,7 +380,7 @@ impl<'a> System<'a> for UseItemSystem {
                             rltk::RGB::named(rltk::GREEN),
                             rltk::RGB::named(rltk::BLACK),
                             rltk::to_cp437('☺'),
-                            1000.0,
+                            300.0,
                         );
                     }
                 }
@@ -389,7 +389,7 @@ impl<'a> System<'a> for UseItemSystem {
             // magic mapping items
             let item_maps = magic_mapper.get(used_item.item);
             if let Some(_item_maps) = item_maps {
-                gamelog.entries.push(format!("YOU can now SEE this level!"));
+                gamelog.log(format!("YOU can now SEE this level!"));
                 item_was_used = true;
                 *runstate = RunState::MagicMapReveal {
                     row: 0,
@@ -411,9 +411,7 @@ impl<'a> System<'a> for UseItemSystem {
 
             // teleporting items
             if let Some(_) = teleports_player.get(used_item.item) {
-                gamelog
-                    .entries
-                    .push(format!("YOU are carried to another level!"));
+                gamelog.log(format!("YOU are carried to another level!"));
                 item_was_used = true;
 
                 let pos = positions.get(entity);
@@ -502,7 +500,7 @@ impl<'a> System<'a> for ItemDropSystem {
             backpack_items.remove(to_drop.item);
 
             if entity == *player_entity {
-                gamelog.entries.push(format!(
+                gamelog.log(format!(
                     "YOU dropped the {}..",
                     names.get(to_drop.item).unwrap().name
                 ));
@@ -555,11 +553,9 @@ impl<'a> System<'a> for ItemRemoveSystem {
             }
             if entity == *player_entity {
                 if backpack_too_full {
-                    gamelog
-                        .entries
-                        .push(format!("YOU unequipped the {}", name.name));
+                    gamelog.log(format!("YOU unequipped the {}", name.name));
                 } else {
-                    gamelog.entries.push(format!(
+                    gamelog.log(format!(
                         "YOUR backpack is full! can't unequip the {}",
                         name.name
                     ));

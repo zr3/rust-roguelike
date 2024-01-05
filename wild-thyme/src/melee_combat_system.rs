@@ -93,12 +93,12 @@ impl<'a> System<'a> for MeleeCombatSystem {
                         (stats.power + offensive_bonus) - (target_stats.defense + defensive_bonus),
                     );
                     if damage == 0 {
-                        log.entries.push(format!(
+                        log.log(format!(
                             "{} is not able to hurt {}",
                             &name.name, &target_name.name
                         ));
                     } else {
-                        log.entries.push(format!(
+                        log.log(format!(
                             "{} hit {} for {} HP!",
                             &name.name, &target_name.name, damage
                         ));

@@ -50,7 +50,7 @@ impl<'a> System<'a> for VisibilitySystem {
                             if let Some(_hidden) = hidden.get(*e) {
                                 if rng.roll_dice(1, 24) == 1 {
                                     if let Some(name) = names.get(*e) {
-                                        log.entries.push(format!("YOU spotted a {}!", &name.name));
+                                        log.log(format!("YOU spotted a {}!", &name.name));
                                     }
                                     hidden.remove(*e);
                                 }

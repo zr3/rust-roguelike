@@ -2,6 +2,7 @@ use crate::{
     components::{DropsLoot, Name, Position, WantsToDropItem},
     map::Map,
     stats::Stats,
+    window_fx,
 };
 
 use super::{gamelog::GameLog, CombatStats, Player, Renderable, RunState, SufferDamage};
@@ -47,6 +48,7 @@ impl<'a> System<'a> for DamageSystem {
                 if let Some(loot) = drops_loot.get(entity) {
                     let _ = wants_to_drop.insert(entity, WantsToDropItem { item: loot.item });
                 }
+                window_fx::nudge_effect();
             }
             if let Some(_) = players.get(entity) {
                 game_stats.min_hp = std::cmp::min(game_stats.min_hp, stats.hp);
@@ -72,7 +74,7 @@ pub fn delete_the_dead(ecs: &mut World) {
                         let victim_name = names.get(entity);
                         let mut log = ecs.fetch_mut::<GameLog>();
                         if let Some(victim_name) = victim_name {
-                            log.entries.push(format!("{} is dead", &victim_name.name));
+                            log.log(format!("{} is dead", &victim_name.name));
                         }
                         ecs.fetch_mut::<Stats>().mobs_killed += 1;
                         dead.push(entity);
@@ -91,8 +93,9 @@ pub fn delete_the_dead(ecs: &mut World) {
                         pr.fg = RGB::named(rltk::WHITE);
                         pr.bg = RGB::named(rltk::BLACK);
                         let mut log = ecs.fetch_mut::<GameLog>();
-                        log.entries.push("".to_string());
-                        log.entries.push("RIP you".to_string());
+                        log.log("".to_string());
+                        log.log("RIP you. had too wild of a thyme :(".to_string());
+                        window_fx::player_died_effect(&ecs.fetch::<Stats>());
                     }
                 }
             }

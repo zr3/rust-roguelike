@@ -1,13 +1,13 @@
 use crate::{
     calculate_cake,
     components::{
-        CakeIngredient, Confusion, EntityMoved, GoodThyme, Hidden, HungerClock, HungerState,
-        Monster, Name,
+        CakeIngredient, Confusion, EntityMoved, GoodThyme, HungerClock, HungerState, Monster,
     },
     get_visible_tooltips,
     map::TileType,
     particle_system::ParticleBuilder,
     stats::Stats,
+    window_fx,
 };
 
 use super::{
@@ -48,9 +48,7 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
             );
 
             let mut gamelog = ecs.fetch_mut::<GameLog>();
-            gamelog
-                .entries
-                .push("YOU are CONFUSED and cannot move!".to_string());
+            gamelog.log("YOU are CONFUSED and cannot move!".to_string());
             continue;
         }
 
@@ -103,42 +101,42 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 try_move_player(0, 1, &mut gs.ecs)
             }
 
-            VirtualKeyCode::Numpad9 | VirtualKeyCode::Y => try_move_player(1, -1, &mut gs.ecs),
-            VirtualKeyCode::Numpad7 | VirtualKeyCode::U => try_move_player(-1, -1, &mut gs.ecs),
-            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
-            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
+            VirtualKeyCode::Numpad9 | VirtualKeyCode::U => try_move_player(1, -1, &mut gs.ecs),
+            VirtualKeyCode::Numpad7 | VirtualKeyCode::Y => try_move_player(-1, -1, &mut gs.ecs),
+            VirtualKeyCode::Numpad3 | VirtualKeyCode::B => try_move_player(1, 1, &mut gs.ecs),
+            VirtualKeyCode::Numpad1 | VirtualKeyCode::N => try_move_player(-1, 1, &mut gs.ecs),
 
             VirtualKeyCode::I => return RunState::ShowInventory,
             VirtualKeyCode::D => return RunState::ShowDropItem,
             VirtualKeyCode::R => return RunState::ShowRemoveItem,
 
-            VirtualKeyCode::Tab => {
+            VirtualKeyCode::Return => {
                 return RunState::ShowTooltips {
                     current: 0,
                     total: get_visible_tooltips(&gs.ecs).len() as i32,
                 }
             }
 
-            VirtualKeyCode::Escape => return RunState::SaveGame,
-
             VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
                 if !get_item(&mut gs.ecs) {
                     if try_next_level(&mut gs.ecs) {
                         gs.ecs.fetch_mut::<Stats>().portals_taken += 1;
-                        return RunState::NextLevel {
+                        return RunState::FadeToNextLevel {
                             level: gs.ecs.fetch::<Map>().depth + 1,
+                            row: 0,
                         };
                     } else if try_place_ingredient(&mut gs.ecs) {
-                        let log = &mut gs.ecs.fetch_mut::<GameLog>().entries;
-                        log.push("[d]rop an item here to use it in your cake!".to_string());
+                        let log = &mut gs.ecs.fetch_mut::<GameLog>();
+                        log.log("[d]rop an item here to use it in your cake!".to_string());
                     } else if try_judge_cake(&mut gs.ecs) {
                         calculate_cake(&mut gs.ecs);
-                        let log = &mut gs.ecs.fetch_mut::<GameLog>().entries;
-                        log.push(format!(""));
-                        log.push(format!(""));
-                        log.push(format!(""));
-                        log.push(format!(""));
-                        log.push("you did it! the cake is baking..".to_string());
+                        let log = &mut gs.ecs.fetch_mut::<GameLog>();
+                        log.log(format!(""));
+                        log.log(format!(""));
+                        log.log(format!(""));
+                        log.log(format!(""));
+                        log.log("you did it! the cake is baking..".to_string());
+                        window_fx::player_won_effect(&gs.ecs.fetch::<Stats>());
                         return RunState::CakeReveal {
                             row: 0,
                             iteration: 0,
@@ -210,7 +208,7 @@ fn try_place_ingredient(ecs: &mut World) -> bool {
 }
 
 fn try_judge_cake(ecs: &mut World) -> bool {
-    let log = &mut ecs.fetch_mut::<GameLog>().entries;
+    let log = &mut ecs.fetch_mut::<GameLog>();
     let player_pos = ecs.fetch::<Point>();
     let map = ecs.fetch::<Map>();
     let player_idx = map.xy_idx(player_pos.x, player_pos.y);
@@ -223,10 +221,10 @@ fn try_judge_cake(ecs: &mut World) -> bool {
         .join()
         .any(|(_, pos)| map.tiles[map.xy_idx(pos.x, pos.y)] == TileType::IngredientTable)
     {
-        log.push(format!(
+        log.log(format!(
             "[d]rop your CAKE INGREDIENTS on the pedestals above.."
         ));
-        log.push(format!(
+        log.log(format!(
             "some GOOD THYME is needed for a cake before it can be judged!"
         ));
         return false;
@@ -240,10 +238,10 @@ fn try_judge_cake(ecs: &mut World) -> bool {
         }
     });
     if num_ingredients < 3 {
-        log.push(format!(
+        log.log(format!(
             "[d]rop your CAKE INGREDIENTS on the pedestals above.."
         ));
-        log.push(format!("a good CAKE needs at least 3 INGREDIENTS!"));
+        log.log(format!("a good CAKE needs at least 3 INGREDIENTS!"));
         return false;
     }
     return true;

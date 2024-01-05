@@ -66,8 +66,7 @@ impl<'a> System<'a> for TriggerSystem {
                 if entity != *entity_id {
                     if let Some(trigger) = entry_trigger.get(*entity_id) {
                         if let Some(name) = names.get(*entity_id) {
-                            log.entries
-                                .push(format!("{} {}!", &name.name, &trigger.verb));
+                            log.log(format!("{} {}!", &name.name, &trigger.verb));
                         }
 
                         hidden.remove(*entity_id);

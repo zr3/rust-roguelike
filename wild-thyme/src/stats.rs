@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
 pub struct Stats {
+    pub name: String,
     pub deepest_level: i32,
     pub most_items_held: i32,
     pub thyme_eaten: i32,
@@ -28,6 +29,7 @@ pub struct CakeStats {
 impl Stats {
     pub fn new() -> Stats {
         Stats {
+            name: format!("???"),
             deepest_level: 0,
             most_items_held: 0,
             thyme_eaten: 0,

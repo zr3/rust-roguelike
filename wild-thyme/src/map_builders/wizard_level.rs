@@ -65,7 +65,7 @@ impl MapBuilder for WizardLevelBuilder {
             18,
             rltk::to_cp437('☺'),
             RGB::from_hex("#805080").expect("hardcoded"),
-            "FOREST WIZARD",
+            "FOREST DRUID",
             vec![
                 "WELCOME!".to_string(),
                 "a FRIENDLY EAGLE will help you get home".to_string(),

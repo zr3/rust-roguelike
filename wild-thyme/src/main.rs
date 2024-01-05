@@ -30,6 +30,7 @@ mod rex_assets;
 mod saveload_system;
 mod spawn_system;
 mod trigger_system;
+mod window_fx;
 
 pub mod map_builders;
 
@@ -67,6 +68,10 @@ pub enum RunState {
         menu_selection: gui::MainMenuSelection,
     },
     SaveGame,
+    FadeToNextLevel {
+        level: i32,
+        row: i32,
+    },
     NextLevel {
         level: i32,
     },
@@ -283,9 +288,7 @@ impl GameState for State {
                     gui::GameOverResult::NoSelection => {}
                     gui::GameOverResult::QuitToMenu => {
                         self.game_over_cleanup();
-                        newrunstate = RunState::MainMenu {
-                            menu_selection: gui::MainMenuSelection::NewGame,
-                        };
+                        newrunstate = RunState::PreRun;
                     }
                 }
             }
@@ -316,12 +319,30 @@ impl GameState for State {
                     menu_selection: gui::MainMenuSelection::LoadGame,
                 };
             }
+            RunState::FadeToNextLevel { level, row } => {
+                window_fx::warp_effect();
+                let mut map = self.ecs.fetch_mut::<Map>();
+                for x in 0..MAPWIDTH as i32 {
+                    let idx = map.xy_idx(x as i32, row);
+                    map.revealed_tiles[idx] = false;
+                    map.visible_tiles[idx] = false;
+                }
+                if row as usize == MAPHEIGHT - 1 {
+                    newrunstate = RunState::NextLevel { level };
+                } else {
+                    newrunstate = RunState::FadeToNextLevel {
+                        level,
+                        row: row + 1,
+                    };
+                }
+            }
             RunState::NextLevel { level } => {
                 self.goto_level(level);
                 let mut stats = self.ecs.fetch_mut::<Stats>();
                 if stats.deepest_level < level {
                     stats.deepest_level = level;
                 }
+                window_fx::narrate(&stats);
                 newrunstate = RunState::PreRun;
             }
             RunState::MagicMapReveal { row, iteration } => {
@@ -374,9 +395,7 @@ impl GameState for State {
                     gui::GameOverResult::NoSelection => {}
                     gui::GameOverResult::QuitToMenu => {
                         self.game_over_cleanup();
-                        newrunstate = RunState::MainMenu {
-                            menu_selection: gui::MainMenuSelection::NewGame,
-                        };
+                        newrunstate = RunState::PreRun;
                     }
                 }
             }
@@ -524,8 +543,7 @@ impl State {
         let player_entity = self.ecs.fetch::<Entity>();
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
         gamelog
-            .entries
-            .push("YOU pass through the forest portal! and rest for a few minutes...".to_string());
+            .log("YOU pass through the forest portal! and rest for a few minutes...".to_string());
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
@@ -554,13 +572,11 @@ impl State {
         self.ecs.insert(Stats::new());
         self.ecs.insert(Map::new(1));
         self.ecs.insert(Point::new(0, 0));
-        self.ecs.insert(RunState::MainMenu {
-            menu_selection: { gui::MainMenuSelection::NewGame },
-        });
+        self.ecs.insert(RunState::PreRun);
         self.ecs.insert(particle_system::ParticleBuilder::new());
-        self.ecs.insert(gamelog::GameLog {
-            entries: vec!["you find yourself in a dark af forest...".to_string()],
-        });
+        self.ecs.insert(gamelog::GameLog::new(vec![
+            "you find yourself in a dark af forest...".to_string(),
+        ]));
         self.generate_world_map(1);
     }
 
@@ -601,7 +617,7 @@ fn main() -> rltk::BError {
     // build context and game state
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
-        .with_title("rusty roguelike tutorial")
+        .with_title("and we had a wild thyme")
         .with_gutter(16)
         .with_tile_dimensions(16, 16)
         .build()?;
