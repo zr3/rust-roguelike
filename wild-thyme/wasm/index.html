@@ -207,10 +207,10 @@ body.dim {
               console.log(stats);
               if (stats.deepest_level % 10 > 0) {
                   // normal level
-                fetchNarration(stats, 'narration/level');
+                fetchNarration(stats, 'level');
               } else {
                   // druid garden
-                fetchNarration(stats, 'narration/garden');
+                fetchNarration(stats, 'garden');
               }
         },
         player_died: (
@@ -234,7 +234,7 @@ body.dim {
                 steps_taken,
               };
               console.log(stats);
-            fetchNarration(stats, 'narration/dead');
+            fetchNarration(stats, 'dead');
         },
         player_won: (
             deepest_level,
@@ -273,7 +273,7 @@ body.dim {
                 cake_edible_points,
               };
               console.log(stats);
-            fetchNarration(stats, 'narration/baked');
+            fetchNarration(stats, 'baked');
           }
       };
       function shiftbg() {
@@ -287,12 +287,12 @@ body.dim {
       async function fetchNarration(stats, narrationType) {
           document.getElementById('top-text-element').innerText = '';
           try {
-              const response = await fetch(`/api/wild/${narrationType}`, {
+              const response = await fetch(`/api/wild-thyme/narration`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
-                  body: JSON.stringify({...gameStats, ...stats}),
+                  body: JSON.stringify({narrationType, ...gameStats, ...stats}),
             });
             const result = await response.json();
             console.log("Success:", result);

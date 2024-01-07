@@ -52,7 +52,32 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 
 ✔️ m3: ui, story and outer loop
 
-  m4: narrator
+✔️ m4: narrator
 
-  m5: website
+✔️ m5: website
 
+  m6: cicd, auth, backend
+
+  m7: cleanup
+
+  m8: bug fixes and feedback
+
+  m9: final polish
+
+## playtest notes
+
+- tried to interact with the humans
+- turn-based world wasn't intuitive
+- helpful to know about the enter thing
+- log maybe overwhelming
+- hard to notice narration
+
+- liked portal
+- not used to all the words, tutorial would help 
+- didn't feel like there was time
+
+other ideas:
+- wild thyme have chance of killing you?
+- tutorial and tips, recommend F11 right away
+- set of prebaked narrations
+- get narrator to pick up on weird things, like doing nothing but drinking milk once and then waiting until you starve
