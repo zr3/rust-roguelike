@@ -9,12 +9,13 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     defaults:
       run:
         working-directory: ./wild-thyme
@@ -27,9 +28,11 @@ jobs:
     - name: Build
       run: cargo build --release --target=wasm32-unknown-unknown && wasm-bindgen target/wasm32-unknown-unknown/release/and_we_had_a_wild_thyme.wasm --out-dir wasm --no-modules --no-typescript
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@master
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         aws-region: us-west-2
     - name: Publish to S3
+      with:
+        aws-region: us-west-2
       run: aws s3 sync ./wasm s3://wild-thyme
