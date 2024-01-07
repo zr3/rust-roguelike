@@ -33,6 +33,4 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         aws-region: us-west-2
     - name: Publish to S3
-      with:
-        aws-region: us-west-2
       run: aws s3 sync ./wasm s3://wild-thyme
