@@ -12,12 +12,24 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     defaults:
       run:
         working-directory: ./wild-thyme
     steps:
     - uses: actions/checkout@v3
-    - name: Build
-      run: rustup target add wasm32-unknown-unknown && cargo build --release --target=wasm32-unknown-unknown
+    - name: Install tools
+      run: rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli
     - name: Run tests
       run: cargo test --verbose
+    - name: Build
+      run: cargo build --release --target=wasm32-unknown-unknown && wasm-bindgen target/wasm32-unknown-unknown/release/and_we_had_a_wild_thyme.wasm --out-dir wasm --no-modules --no-typescript
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: us-west-2
+    - name: Publish to S3
+      run: aws s3 sync ./wasm s3://wild-thyme
