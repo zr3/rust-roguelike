@@ -72,7 +72,7 @@ async fn request_to_chat(
         name: None,
         function_call: None,
     });
-    let chat_completion = ChatCompletion::builder("gpt-4", messages.clone())
+    let chat_completion = ChatCompletion::builder("gpt-4-1106-preview", messages.clone())
         .create()
         .await
         .unwrap();
