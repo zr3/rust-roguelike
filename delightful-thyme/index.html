@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width" />
+    <title>..And We Had a Wild Thyme</title>
+  </head>
+  <body>
+    <svg id="warp-effect">
+      <filter id="treeportal">
+        <feColorMatrix
+          type="matrix"
+          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"
+          in="colormatrix1"
+          result="colormatrix2"
+          class=""
+        ></feColorMatrix>
+        <feTurbulence
+          id="treeportal-turbulence"
+          type="turbulence"
+          baseFrequency="0 0"
+          numOctaves="2"
+          result="turbulence"
+        ></feTurbulence>
+        <feDisplacementMap
+          in="colormatrix2"
+          in2="colomatrix4"
+          scale="40"
+          xChannelSelector="R"
+          yChannelSelector="G"
+          result="displacementMap"
+        ></feDisplacementMap>
+      </filter>
+    </svg>
+    <section id="top-text" class="text-box">
+      <p id="top-text-element"></p>
+    </section>
+    <section id="input-window">
+      <label style="font-size: 28px">who are you?</label>
+      <input
+        id="wild-name"
+        type="text"
+        autofocus
+        pattern="[\w\s]+"
+        name="wild-name"
+        required=""
+        minlength="1"
+        maxlength="10"
+      />
+      <p id="input-window-confirm">press ENTER</p>
+    </section>
+    <section id="game-window">
+      <canvas id="canvas" width="1280" height="800"></canvas>
+    </section>
+    <section id="bottom-text" class="text-box">
+      <p>[ARROW KEYS]/[UHJK] : move</p>
+      <p>[SPACE] : pick up, portal, interact on item you stand on</p>
+      <p>[I] : inventory</p>
+      <p>[D] : drop item on ground</p>
+      <p>[R] : remove (unwear/unwield) an item</p>
+      <p>[ENTER] : see wtf is on the screen (scan all)</p>
+      <p>[MOUSE HOVER] : see wtf is on the screen (under mouse)</p>
+      <p>[F5] : restart</p>
+      <p>[F11] : fullscreen</p>
+    </section>
+    <script src="./and_we_had_a_wild_thyme.js"></script>
+    <script src="./kickstart.ts" type="text/javascript"></script>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
