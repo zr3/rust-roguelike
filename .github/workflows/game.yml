@@ -30,7 +30,8 @@ jobs:
         working-directory: ./wild-thyme
     steps:
     - uses: actions/checkout@v3
-    - name: Cache Rust toolchain
+    - id: cache-rustup
+      name: Cache Rust toolchain
       uses: actions/cache@v3
       with:
         path: ~/.rustup
@@ -45,8 +46,6 @@ jobs:
       run: cargo build --release --target=wasm32-unknown-unknown
     - name: Generate JS bindings
       run: wasm-bindgen target/wasm32-unknown-unknown/release/and_we_had_a_wild_thyme.wasm --out-dir wasm --no-modules
-    - name: Debug info
-      run: pwd ; echo ; ls ; echo ; ls target/wasm32-unknown-unknown/release ; echo ; ls wasm
     - name: Archive wasm
       uses: actions/upload-artifact@v3
       with:
@@ -65,14 +64,16 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: wasm-build
-        path: ./wild-thyme
+        path: delightful-thyme/wild-thyme
+    - name: Install
+      run: bun install
     - name: Build
       run: bun run build
     - name: Archive web build
       uses: actions/upload-artifact@v3
       with:
         name: web-build
-        path: dist
+        path: delightful-thyme/dist
   publish:
     needs: build-web
     runs-on: ubuntu-latest
@@ -89,6 +90,6 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: wasm-build
-        path: ./wild-thyme
+        path: publish
     - name: Publish to S3
-      run: aws s3 sync ./wild-thyme s3://wild-thyme
+      run: aws s3 sync . s3://wild-thyme
