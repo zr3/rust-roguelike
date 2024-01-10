@@ -14,23 +14,56 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-game:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./wild-thyme
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3j
     - name: Install tools
       run: rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli
     - name: Run tests
       run: cargo test --verbose
     - name: Build
-      run: cargo build --release --target=wasm32-unknown-unknown && wasm-bindgen target/wasm32-unknown-unknown/release/and_we_had_a_wild_thyme.wasm --out-dir wasm --no-modules --no-typescript
+      run: cargo build --release --target=wasm32-unknown-unknown && wasm-bindgen target/wasm32-unknown-unknown/release/and_we_had_a_wild_thyme.wasm --out-dir ./wasm --no-modules
+    - name: Archive wasm
+      uses: actions/upload-artifact@v3
+      with:
+        name: wasm-build
+        path: |
+          wasm
+  build-web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./delightful-thyme
+    steps:
+    - uses: actions/checkout@v3
+    - uses: oven-sh/setup-bun@v1
+    - name: Download wasm artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: wasm-build
+        path: ./wild-thyme
+    - name: Build
+      run: bun run build
+    - name: Archive web build
+      uses: actions/upload-artifact@v3
+      with:
+        name: web-build
+        path: |
+          dist
+  publish:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         aws-region: us-west-2
+    - name: Download web build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: wasm-build
+        path: ./wild-thyme
     - name: Publish to S3
-      run: aws s3 sync ./wasm s3://wild-thyme
+      run: aws s3 sync ./wild-thyme s3://wild-thyme
