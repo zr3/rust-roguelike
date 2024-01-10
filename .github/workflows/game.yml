@@ -55,6 +55,11 @@ jobs:
         path: |
           dist
   publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./publish
+    steps:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
