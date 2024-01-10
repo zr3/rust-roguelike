@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: ./wild-thyme
     steps:
-    - uses: actions/checkout@v3j
+    - uses: actions/checkout@v3
     - name: Install tools
       run: rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli
     - name: Run tests
