@@ -14,6 +14,13 @@ permissions:
   contents: read
 
 jobs:
+  test-game:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./wild-thyme
+    - name: Run tests
+      run: cargo test --verbose
   build-game:
     runs-on: ubuntu-latest
     defaults:
@@ -32,19 +39,17 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - name: Install wasm-bindgen
       run: cargo install wasm-bindgen-cli
-    - name: Run tests
-      run: cargo test --verbose
     - name: Build
       run: cargo build --release --target=wasm32-unknown-unknown
     - name: Generate JS bindings
       run: wasm-bindgen target/wasm32-unknown-unknown/release/and_we_had_a_wild_thyme.wasm --out-dir wasm --no-modules
     - name: Debug info
-      run: ls ; echo ; ls target/wasm32-unknown-unknown/release ; echo ; ls wasm
+      run: pwd ; echo ; ls ; echo ; ls target/wasm32-unknown-unknown/release ; echo ; ls wasm
     - name: Archive wasm
       uses: actions/upload-artifact@v3
       with:
         name: wasm-build
-        path: wasm/*
+        path: wasm
   build-web:
     needs: build-game
     runs-on: ubuntu-latest
