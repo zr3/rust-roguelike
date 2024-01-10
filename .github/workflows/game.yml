@@ -19,6 +19,7 @@ jobs:
     defaults:
       run:
         working-directory: ./wild-thyme
+    steps:
     - name: Run tests
       run: cargo test --verbose
   build-game:
