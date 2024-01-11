@@ -223,7 +223,7 @@ async function intro() {
     document.getElementById("wild-name-box").remove();
     document.querySelectorAll(".intro-text").forEach((e) => e.remove());
     window.setTimeout(() => inputWindow.remove(), 2000);
-    wasm_bindgen("./wild-thyme/and_we_had_a_wild_thyme_bg.wasm");
+    wasm_bindgen("./and_we_had_a_wild_thyme_bg.wasm");
   });
 }
 intro();

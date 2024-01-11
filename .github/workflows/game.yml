@@ -67,10 +67,12 @@ jobs:
         path: delightful-thyme/wild-thyme
     - name: Install
       run: bun install
+    - name: Copy wasm
+      run: cp wild-thyme/*.wasm public
     - name: Build
       run: bun run build
-    - name: Debug process
-      run: pwd;echo;ls -al;echo;ls -al dist;echo;ls -al delightful-thyme;echo;ls -al delightful-thyme/dist;
+    - name: Debug workflow
+      run: pwd;echo;ls -al;echo;ls -al dist;echo;ls -al public;
     - name: Archive web build
       uses: actions/upload-artifact@v3
       with:
@@ -93,5 +95,7 @@ jobs:
       with:
         name: wasm-build
         path: publish
+    - name: Debug workflow
+      run: pwd;echo;ls -al;
     - name: Publish to S3
       run: aws s3 sync . s3://wild-thyme
