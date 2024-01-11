@@ -17,12 +17,12 @@ body.dim {
     filter: opacity(1);
     z-index: 10;
     position: absolute;
-    top: calc((100vh - 800px) / 2 + 20px);
+    top: 0;
+    bottom: 0;
     left: 20px;
     display: flex;
     justify-content: center;
-    height: 800px;
-    width: 1280px;
+    width: 65vw;
     align-items: center;
     flex-direction: column;
     font-family: "PC Senior", monospace;
@@ -66,6 +66,7 @@ body.dim {
 #canvas {
     box-shadow: 0px 10px 40px #000;
     filter: url(#treeportal);
+    width: 65vw;
 }
 #game-window.portal {
     filter: hue-rotate(180deg) blur(12px) opacity(1);
@@ -92,13 +93,16 @@ body.dim {
 }
 #top-text {
     font-family: 'PC Senior', monospace;
-    top: 0;
+    top: 24px;
+    min-width: 29ch;
+    font-size: 1.1vw;
 }
 #bottom-text {
     font-family: 'PC Senior', monospace;
     font-size: 10px;
-    bottom: 0;
+    bottom: 24px;
     line-height: 1;
+    min-width: 32vw;
 }
 .hidden {
     visibility: hidden;
