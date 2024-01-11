@@ -69,6 +69,8 @@ jobs:
       run: bun install
     - name: Build
       run: bun run build
+    - name: Debug process
+      run: pwd;echo;ls -al;echo;ls -al dist;echo;ls -al delightful-thyme;echo;ls -al delightful-thyme/dist;
     - name: Archive web build
       uses: actions/upload-artifact@v3
       with:
