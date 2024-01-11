@@ -93,9 +93,9 @@ jobs:
     - name: Download web build artifact
       uses: actions/download-artifact@v3
       with:
-        name: wasm-build
+        name: web-build
         path: publish
     - name: Debug workflow
       run: pwd;echo;ls -al;
     - name: Publish to S3
-      run: aws s3 sync . s3://wild-thyme
+      run: aws s3 sync --delete . s3://wild-thyme
