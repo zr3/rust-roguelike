@@ -56,7 +56,7 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 
 ✔️ m5: website
 
-  m6: cicd, auth, backend
+✔️ m6: cicd, auth, backend
 
   m7: cleanup
 

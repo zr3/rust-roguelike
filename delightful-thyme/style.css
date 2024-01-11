@@ -25,11 +25,10 @@ body.dim {
     width: 1280px;
     align-items: center;
     flex-direction: column;
-    color: #fff;
     font-family: "PC Senior", monospace;
     background-image: url('img/redwood.avif');
     background-size: 10000px 10000px;
-    background-position: -550px -3000px;
+    background-position: -2900px -5300px;
     image-rendering: pixelated;
     filter: opacity(1);
     transition: filter 0.8s ease-out;
@@ -38,14 +37,16 @@ body.dim {
     filter: opacity(0);
 }
 #wild-name {
+    color: #fff;
     padding: 8px;
-    background: #70c0a0;
+    background: transparent;
     border-radius: 0;
     width: 170px;
     text-align: center;
     font-family: "PC Senior", monospace;
     margin: 10px;
     border: none;
+    border: 1px solid #fff;
 }
 #wild-name:valid {
     border: 8px solid #10aa10;
@@ -98,10 +99,28 @@ body.dim {
     font-size: 1vh;
     bottom: 0;
 }
+.hidden {
+    visibility: hidden;
+}
 .text-box {
     position: absolute;
     right: 0;
-    font-size: 2vh;
+    font-size: 18px;
     color: #aaa;
-    width: calc(100% - 1310px);
+    width: calc(100% - 1330px);
+    line-height: 32px;
+}
+.intro-text {
+    line-height: 1;
+}
+.type-animation {
+    width: 30ch;
+    animation: typing 1.5s steps(30);
+    white-space: nowrap;
+    overflow: hidden;
+}
+@keyframes typing {
+  from {
+    width: 0
+  }
 }

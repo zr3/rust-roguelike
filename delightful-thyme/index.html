@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="hi come and play this game where you dive into the forest to meet a druid and gather ingredients so you can make a nice cake." />
     <title>..And We Had a Wild Thyme</title>
   </head>
   <body>
@@ -34,26 +35,13 @@
       </filter>
     </svg>
     <section id="top-text" class="text-box">
-      <p id="top-text-element"></p>
     </section>
     <section id="input-window">
-      <label style="font-size: 28px">who are you?</label>
-      <input
-        id="wild-name"
-        type="text"
-        autofocus
-        pattern="[\w\s]+"
-        name="wild-name"
-        required=""
-        minlength="1"
-        maxlength="10"
-      />
-      <p id="input-window-confirm">press ENTER</p>
     </section>
     <section id="game-window">
       <canvas id="canvas" width="1280" height="800"></canvas>
     </section>
-    <section id="bottom-text" class="text-box">
+    <section id="bottom-text" class="text-box hidden">
       <p>[ARROW KEYS]/[UHJK] : move</p>
       <p>[SPACE] : pick up, portal, interact on item you stand on</p>
       <p>[I] : inventory</p>
