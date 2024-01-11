@@ -165,7 +165,7 @@ async function spellOutText(text: string) {
   const lines = greedyLineBreak(30, text);
   for (let line of lines) {
     topText.innerHTML += `<p class="intro-text type-animation">${line}</p>`;
-    await delay(1500);
+    await delay(1100);
     topText.lastElementChild?.classList.remove("type-animation");
   }
 }
@@ -224,6 +224,11 @@ async function intro() {
     document.querySelectorAll(".intro-text").forEach((e) => e.remove());
     window.setTimeout(() => inputWindow.remove(), 2000);
     wasm_bindgen("./and_we_had_a_wild_thyme_bg.wasm");
+    tutorialText();
   });
+}
+async function tutorialText() {
+    await spellOutText("You are the @, and time only moves when you move. MYSTERIOUS FIGURE will give you hints. ENTER to see what the symbols on-screen are. SPACE to interact with things, and more controls below. DYING IS NORMAL! This game is about exploration and experimentation, and there are plenty of items to find, so don't be afraid to use them!");
+    document.getElementById("bottom-text")?.classList.remove('hidden');
 }
 intro();
