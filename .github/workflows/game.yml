@@ -98,6 +98,6 @@ jobs:
     - name: Debug workflow
       run: pwd;echo;ls -al;
     - name: Publish to S3
-      run: aws s3 sync --delete . ${{ AWS_WILD_THYME_S3BUCKET }}
+      run: aws s3 sync --delete . ${{ secrets.AWS_WILD_THYME_S3BUCKET }}
     - name: Add Cloudfront invalidation
-      run: aws cloudfront create-invalidation --distribution-id ${{ AWS_WILD_THYME_CLOUDFRONT_ID }} --paths "/*" --no-cli-pager
+      run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_WILD_THYME_CLOUDFRONT_ID }} --paths "/*" --no-cli-pager
