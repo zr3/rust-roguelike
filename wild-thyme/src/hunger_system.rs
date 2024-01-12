@@ -60,12 +60,12 @@ impl<'a> System<'a> for HungerSystem {
                         HungerState::Hungry => {
                             clock.state = HungerState::Starving;
                             if entity == *player_entity {
-                                log.log("YOU are STARVING! :c".to_string());
+                                log.log("YOU are STARVING! :(".to_string());
                             }
                         }
                         HungerState::Starving => {
                             if entity == *player_entity {
-                                log.log("YOU feel pain from the hunger :c".to_string());
+                                log.log("YOU feel pain from the hunger :(".to_string());
                             }
                             SufferDamage::new_damage(&mut inflict_damage, entity, 1);
                         }

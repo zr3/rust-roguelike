@@ -228,7 +228,7 @@ async function intro() {
   });
 }
 async function tutorialText() {
-    await spellOutText("You are the @, and time only moves when you move. MYSTERIOUS FIGURE will give you hints. ENTER to see what the symbols on-screen are. SPACE to interact with things, and more controls below. DYING IS NORMAL! This game is about exploration and experimentation, and there are plenty of items to find, so don't be afraid to use them!");
+    await spellOutText("Wow, ok. Hopefully I can remember that! Anyway, you are the @, and time only moves when you move. ENTER to see what the symbols on-screen are. SPACE to interact with things, and more controls below. DYING IS NORMAL! This world is about exploration and experimentation, and there are plenty of items to find, so don't be afraid to use them!");
     document.getElementById("bottom-text")?.classList.remove('hidden');
 }
 intro();

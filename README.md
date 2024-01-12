@@ -81,3 +81,8 @@ other ideas:
 - tutorial and tips, recommend F11 right away
 - set of prebaked narrations
 - get narrator to pick up on weird things, like doing nothing but drinking milk once and then waiting until you starve
+
+- make it responsive
+- clearer notifications: backpack full! starving! what you picked up!
+- color code items based on value?
+- zelda-style item tutorials, show what things are the first time you see them
