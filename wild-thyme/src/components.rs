@@ -30,6 +30,15 @@ pub struct Viewshed {
 }
 
 #[derive(Component, Serialize, Deserialize, Clone)]
+pub struct VisibleToPlayer {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct SeenByPlayer {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct HighlightItem {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Monster {}
 
 #[derive(Component, Serialize, Deserialize, Clone)]

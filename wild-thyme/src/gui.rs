@@ -4,7 +4,8 @@ use specs::prelude::*;
 
 use crate::{
     components::{
-        Backpack, CombatStats, Equipped, Hidden, HungerClock, HungerState, InBackpack, Viewshed,
+        Backpack, CombatStats, Equipped, Hidden, HighlightItem, HungerClock, HungerState,
+        InBackpack, Viewshed,
     },
     get_visible_tooltips,
     stats::Stats,
@@ -117,9 +118,26 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             ctx.print_color(
                 5,
                 0,
+                RGB::from_hex("#f0f0f0").expect("hardcoded"),
+                RGB::named(rltk::BLACK),
+                "VIEWING tips! Press any key..",
+            );
+        }
+        RunState::HighlightItem {} => {
+            for (_highlight_item, position) in (
+                &ecs.read_storage::<HighlightItem>(),
+                &ecs.read_storage::<Position>(),
+            )
+                .join()
+            {
+                draw_tooltip_at_pos(ecs, ctx, (position.x, position.y));
+            }
+            ctx.print_color(
+                5,
+                0,
                 RGB::from_hex("#a07030").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
-                "viewing tips (press any key..):",
+                format!("SPOTTED new things! Press [SPACE].."),
             );
         }
         _ => {}

@@ -1,5 +1,5 @@
 use crate::{
-    components::{Hidden, Name},
+    components::{Hidden, Name, VisibleToPlayer},
     gamelog::GameLog,
 };
 
@@ -20,11 +20,22 @@ impl<'a> System<'a> for VisibilitySystem {
         WriteExpect<'a, rltk::RandomNumberGenerator>,
         WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
+        WriteStorage<'a, VisibleToPlayer>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, entities, mut viewshed, pos, player, mut hidden, mut rng, mut log, names) =
-            data;
+        let (
+            mut map,
+            entities,
+            mut viewshed,
+            pos,
+            player,
+            mut hidden,
+            mut rng,
+            mut log,
+            names,
+            mut visible_to_player,
+        ) = data;
 
         for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
             if viewshed.dirty {
@@ -40,6 +51,7 @@ impl<'a> System<'a> for VisibilitySystem {
                     for t in map.visible_tiles.iter_mut() {
                         *t = false
                     }
+                    visible_to_player.clear();
                     for vis in viewshed.visible_tiles.iter() {
                         let idx = map.xy_idx(vis.x, vis.y);
                         map.revealed_tiles[idx] = true;
@@ -51,9 +63,12 @@ impl<'a> System<'a> for VisibilitySystem {
                                 if rng.roll_dice(1, 24) == 1 {
                                     if let Some(name) = names.get(*e) {
                                         log.log(format!("YOU spotted a {}!", &name.name));
+                                        let _ = visible_to_player.insert(*e, VisibleToPlayer {});
                                     }
                                     hidden.remove(*e);
                                 }
+                            } else {
+                                let _ = visible_to_player.insert(*e, VisibleToPlayer {});
                             }
                         }
                     }

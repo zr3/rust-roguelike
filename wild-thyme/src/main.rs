@@ -1,6 +1,9 @@
+const IS_ITEM_HIGHLIGHT_ENABLED: bool = false;
+
 use std::collections::HashMap;
 
 use hunger_system::HungerSystem;
+use item_tutorial_system::ItemTutorialSystem;
 use rltk::{GameState, Point, Rltk};
 use spawn_system::{SpawnBuilder, SpawnRequest};
 use specs::prelude::*;
@@ -22,6 +25,7 @@ mod inventory_system;
 mod spawners;
 use inventory_system::*;
 mod hunger_system;
+mod item_tutorial_system;
 mod menu;
 mod particle_system;
 mod quip_system;
@@ -63,6 +67,7 @@ pub enum RunState {
         current: i32,
         total: i32,
     },
+    HighlightItem {},
     GameOver,
     MainMenu {
         menu_selection: gui::MainMenuSelection,
@@ -129,7 +134,6 @@ impl GameState for State {
         match newrunstate {
             RunState::PreRun => {
                 self.run_systems();
-                self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::AwaitingInput => {
@@ -137,7 +141,7 @@ impl GameState for State {
             }
             RunState::PlayerTurn => {
                 self.run_systems();
-                self.ecs.maintain();
+
                 newrunstate = match *self.ecs.fetch::<RunState>() {
                     RunState::MagicMapReveal { .. } => RunState::MagicMapReveal {
                         row: 0,
@@ -148,11 +152,14 @@ impl GameState for State {
             }
             RunState::MonsterTurn => {
                 self.run_systems();
-                self.ecs.maintain();
                 newrunstate = RunState::PostTurn;
             }
             RunState::PostTurn => {
                 self.run_systems();
+                if IS_ITEM_HIGHLIGHT_ENABLED {
+                    let mut itemtutorial = ItemTutorialSystem {};
+                    itemtutorial.run_now(&self.ecs);
+                }
                 let mut requests = Vec::new();
                 {
                     let sb = self.ecs.fetch::<SpawnBuilder>();
@@ -179,7 +186,10 @@ impl GameState for State {
                     sb.requests.clear();
                 }
                 self.ecs.maintain();
-                newrunstate = RunState::AwaitingInput;
+                newrunstate = match *self.ecs.fetch::<RunState>() {
+                    RunState::HighlightItem {} => RunState::HighlightItem {},
+                    _ => RunState::AwaitingInput,
+                }
             }
             RunState::ShowInventory => {
                 let result = gui::show_inventory(self, ctx);
@@ -412,6 +422,28 @@ impl GameState for State {
                     }
                 }
             },
+            RunState::HighlightItem {} => match ctx.key {
+                Some(rltk::VirtualKeyCode::Space) => {
+                    let mut to_delete = Vec::new();
+                    {
+                        for (entity, _highlight_item, _position, _name) in (
+                            &self.ecs.entities(),
+                            &self.ecs.read_storage::<HighlightItem>(),
+                            &self.ecs.read_storage::<Position>(),
+                            &self.ecs.read_storage::<Name>(),
+                        )
+                            .join()
+                        {
+                            to_delete.push(entity);
+                        }
+                    }
+                    for entity in to_delete {
+                        let _ = self.ecs.delete_entity(entity);
+                    }
+                    newrunstate = RunState::AwaitingInput;
+                }
+                _ => {}
+            },
         }
 
         {
@@ -628,6 +660,9 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<VisibleToPlayer>();
+    gs.ecs.register::<SeenByPlayer>();
+    gs.ecs.register::<HighlightItem>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<BlocksTile>();
