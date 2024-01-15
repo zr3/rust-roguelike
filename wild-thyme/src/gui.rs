@@ -116,11 +116,11 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             let tooltip = &get_visible_tooltips(ecs)[current as usize];
             draw_tooltip_at_pos(ecs, ctx, (tooltip.0.x, tooltip.0.y));
             ctx.print_color(
-                5,
+                0,
                 0,
                 RGB::from_hex("#f0f0f0").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
-                "VIEWING tips! Press any key..",
+                "SPOTTING things! Press [SPACE]..",
             );
         }
         RunState::HighlightItem {} => {
@@ -133,11 +133,18 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 draw_tooltip_at_pos(ecs, ctx, (position.x, position.y));
             }
             ctx.print_color(
-                5,
+                0,
                 0,
                 RGB::from_hex("#a07030").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
-                format!("SPOTTED new things! Press [SPACE].."),
+                format!("SPOTTED something new! Press [SPACE].."),
+            );
+            ctx.print_color(
+                0,
+                1,
+                RGB::from_hex("#704000").expect("hardcoded"),
+                RGB::named(rltk::BLACK),
+                format!("(press [ESC] to stop tips)"),
             );
         }
         _ => {}
@@ -617,7 +624,7 @@ pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
         27,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
-        "press [ENTER] to try again",
+        "[ENTER] to try again",
     );
 
     match ctx.key {
@@ -632,7 +639,7 @@ pub fn cake_judge(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
         7,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
-        "you baked...",
+        "YOU baked...",
     );
     ctx.print_color_centered(
         9,

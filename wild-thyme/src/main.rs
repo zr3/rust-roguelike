@@ -1,5 +1,3 @@
-const IS_ITEM_HIGHLIGHT_ENABLED: bool = true;
-
 use std::collections::HashMap;
 
 use hunger_system::HungerSystem;
@@ -94,6 +92,9 @@ pub enum RunState {
 pub struct State {
     pub ecs: World,
 }
+pub struct UIConfig {
+    highlight_discoveries: bool,
+}
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         let mut newrunstate;
@@ -140,7 +141,7 @@ impl GameState for State {
 
             // main loop
             RunState::PreRound => {
-                if IS_ITEM_HIGHLIGHT_ENABLED {
+                if self.ecs.fetch::<UIConfig>().highlight_discoveries {
                     let mut item_tutorial = item_tutorial_system::ItemTutorialSystem {};
                     item_tutorial.run_now(&self.ecs);
                 }
@@ -418,8 +419,7 @@ impl GameState for State {
                 }
             }
             RunState::ShowTooltips { current, total } => match ctx.key {
-                None => {}
-                Some(_) => {
+                Some(rltk::VirtualKeyCode::Space) => {
                     if current < total - 1 {
                         newrunstate = RunState::ShowTooltips {
                             current: current + 1,
@@ -429,27 +429,37 @@ impl GameState for State {
                         newrunstate = RunState::AwaitingInput;
                     }
                 }
-            },
-            RunState::HighlightItem {} => match ctx.key {
-                Some(rltk::VirtualKeyCode::Space) => {
-                    let mut to_delete = Vec::new();
-                    {
-                        for (entity, _highlight_item) in (
-                            &self.ecs.entities(),
-                            &self.ecs.read_storage::<HighlightItem>(),
-                        )
-                            .join()
-                        {
-                            to_delete.push(entity);
-                        }
-                    }
-                    for entity in to_delete {
-                        let _ = self.ecs.delete_entity(entity);
-                    }
-                    newrunstate = RunState::PreRound;
-                }
                 _ => {}
             },
+            RunState::HighlightItem {} => {
+                match ctx.key {
+                    Some(rltk::VirtualKeyCode::Space) | Some(rltk::VirtualKeyCode::Escape) => {
+                        let mut to_delete = Vec::new();
+                        {
+                            for (entity, _highlight_item) in (
+                                &self.ecs.entities(),
+                                &self.ecs.read_storage::<HighlightItem>(),
+                            )
+                                .join()
+                            {
+                                to_delete.push(entity);
+                            }
+                        }
+                        for entity in to_delete {
+                            let _ = self.ecs.delete_entity(entity);
+                        }
+                        newrunstate = RunState::PreRound;
+                    }
+                    _ => {}
+                }
+                match ctx.key {
+                    Some(rltk::VirtualKeyCode::Escape) => {
+                        let mut ui_config = self.ecs.write_resource::<UIConfig>();
+                        ui_config.highlight_discoveries = false;
+                    }
+                    _ => {}
+                }
+            }
         }
 
         {
@@ -726,6 +736,9 @@ fn main() -> rltk::BError {
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     gs.ecs.insert(spawn_system::SpawnBuilder::new());
     gs.ecs.insert(rex_assets::RexAssets::new());
+    gs.ecs.insert(UIConfig {
+        highlight_discoveries: true,
+    });
 
     // build the first level
     gs.reset_game();

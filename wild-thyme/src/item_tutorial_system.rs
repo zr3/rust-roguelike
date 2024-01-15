@@ -57,7 +57,7 @@ impl<'a> System<'a> for ItemTutorialSystem {
             let _ = positions.insert(highlight_entity, position.clone());
             let _ = highlights.insert(highlight_entity, HighlightItem {});
             // log to record the new sighting
-            log.log(format!("YOU saw {}.", name.name));
+            log.log(format!("YOU saw {} for the first time.", name.name));
         }
         // set runstate to view stack of new things and log
         if !new_sights.is_empty() {
