@@ -215,20 +215,27 @@ async function intro() {
         </div>
 `;
   const wildNameInput = document.getElementById("wild-name");
-  wildNameInput.addEventListener("change", (event) => {
+  wildNameInput?.addEventListener("change", (event) => {
     console.log(`name is ${event.target.value}`);
     globalThis.gameStats.playerName = event.target.value;
-    const inputWindow = document.getElementById("input-window");
-    inputWindow.classList.add("out");
-    document.getElementById("wild-name-box").remove();
-    document.querySelectorAll(".intro-text").forEach((e) => e.remove());
-    window.setTimeout(() => inputWindow.remove(), 2000);
-    wasm_bindgen("./wasm/and_we_had_a_wild_thyme_bg.wasm");
+    startGame();
     tutorialText();
   });
+}
+function startGame() {
+    const inputWindow = document.getElementById("input-window");
+    inputWindow?.classList.add("out");
+    document.getElementById("wild-name-box")?.remove();
+    document.querySelectorAll(".intro-text").forEach((e) => e.remove());
+    window.setTimeout(() => inputWindow?.remove(), 2000);
+    wasm_bindgen("./wasm/and_we_had_a_wild_thyme_bg.wasm");
 }
 async function tutorialText() {
     await spellOutText("Wow, ok. Hopefully I can remember that! Anyway, you are the @, and time only moves when you move. ENTER to see what the symbols on-screen are. SPACE to interact with things, and more controls below. DYING IS NORMAL! This world is about exploration and experimentation, and there are plenty of items to find, so don't be afraid to use them!");
     document.getElementById("bottom-text")?.classList.remove('hidden');
 }
-intro();
+if (window.location.search.includes('debug')) {
+    startGame();
+} else {
+    intro();
+}
