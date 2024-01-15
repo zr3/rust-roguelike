@@ -1,9 +1,8 @@
-const IS_ITEM_HIGHLIGHT_ENABLED: bool = false;
+const IS_ITEM_HIGHLIGHT_ENABLED: bool = true;
 
 use std::collections::HashMap;
 
 use hunger_system::HungerSystem;
-use item_tutorial_system::ItemTutorialSystem;
 use rltk::{GameState, Point, Rltk};
 use spawn_system::{SpawnBuilder, SpawnRequest};
 use specs::prelude::*;
@@ -52,7 +51,7 @@ use damage_system::*;
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
     AwaitingInput,
-    PreRun,
+    LevelStart,
     PlayerTurn,
     MonsterTurn,
     PostTurn,
@@ -89,6 +88,7 @@ pub enum RunState {
         iteration: i32,
     },
     CakeJudge,
+    PreRound,
 }
 
 pub struct State {
@@ -132,9 +132,22 @@ impl GameState for State {
         }
 
         match newrunstate {
-            RunState::PreRun => {
+            // level start
+            RunState::LevelStart => {
                 self.run_systems();
                 newrunstate = RunState::AwaitingInput;
+            }
+
+            // main loop
+            RunState::PreRound => {
+                if IS_ITEM_HIGHLIGHT_ENABLED {
+                    let mut item_tutorial = item_tutorial_system::ItemTutorialSystem {};
+                    item_tutorial.run_now(&self.ecs);
+                }
+                newrunstate = match *self.ecs.fetch::<RunState>() {
+                    RunState::HighlightItem {} => RunState::HighlightItem {},
+                    _ => RunState::AwaitingInput,
+                }
             }
             RunState::AwaitingInput => {
                 newrunstate = player_input(self, ctx);
@@ -156,10 +169,6 @@ impl GameState for State {
             }
             RunState::PostTurn => {
                 self.run_systems();
-                if IS_ITEM_HIGHLIGHT_ENABLED {
-                    let mut itemtutorial = ItemTutorialSystem {};
-                    itemtutorial.run_now(&self.ecs);
-                }
                 let mut requests = Vec::new();
                 {
                     let sb = self.ecs.fetch::<SpawnBuilder>();
@@ -186,11 +195,10 @@ impl GameState for State {
                     sb.requests.clear();
                 }
                 self.ecs.maintain();
-                newrunstate = match *self.ecs.fetch::<RunState>() {
-                    RunState::HighlightItem {} => RunState::HighlightItem {},
-                    _ => RunState::AwaitingInput,
-                }
+                newrunstate = RunState::PreRound;
             }
+
+            // breakout loops
             RunState::ShowInventory => {
                 let result = gui::show_inventory(self, ctx);
                 match result.0 {
@@ -298,7 +306,7 @@ impl GameState for State {
                     gui::GameOverResult::NoSelection => {}
                     gui::GameOverResult::QuitToMenu => {
                         self.game_over_cleanup();
-                        newrunstate = RunState::PreRun;
+                        newrunstate = RunState::LevelStart;
                     }
                 }
             }
@@ -311,10 +319,10 @@ impl GameState for State {
                         }
                     }
                     gui::MainMenuResult::Selected { selected } => match selected {
-                        gui::MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
+                        gui::MainMenuSelection::NewGame => newrunstate = RunState::LevelStart,
                         gui::MainMenuSelection::LoadGame => {
                             saveload_system::load_game(&mut self.ecs);
-                            newrunstate = RunState::AwaitingInput;
+                            newrunstate = RunState::PreRound;
                             saveload_system::delete_save();
                         }
                         gui::MainMenuSelection::Quit => {
@@ -353,7 +361,7 @@ impl GameState for State {
                     stats.deepest_level = level;
                 }
                 window_fx::narrate(&stats);
-                newrunstate = RunState::PreRun;
+                newrunstate = RunState::LevelStart;
             }
             RunState::MagicMapReveal { row, iteration } => {
                 let mut map = self.ecs.fetch_mut::<Map>();
@@ -405,7 +413,7 @@ impl GameState for State {
                     gui::GameOverResult::NoSelection => {}
                     gui::GameOverResult::QuitToMenu => {
                         self.game_over_cleanup();
-                        newrunstate = RunState::PreRun;
+                        newrunstate = RunState::LevelStart;
                     }
                 }
             }
@@ -426,11 +434,9 @@ impl GameState for State {
                 Some(rltk::VirtualKeyCode::Space) => {
                     let mut to_delete = Vec::new();
                     {
-                        for (entity, _highlight_item, _position, _name) in (
+                        for (entity, _highlight_item) in (
                             &self.ecs.entities(),
                             &self.ecs.read_storage::<HighlightItem>(),
-                            &self.ecs.read_storage::<Position>(),
-                            &self.ecs.read_storage::<Name>(),
                         )
                             .join()
                         {
@@ -440,7 +446,7 @@ impl GameState for State {
                     for entity in to_delete {
                         let _ = self.ecs.delete_entity(entity);
                     }
-                    newrunstate = RunState::AwaitingInput;
+                    newrunstate = RunState::PreRound;
                 }
                 _ => {}
             },
@@ -530,6 +536,7 @@ impl State {
         let backpack = self.ecs.read_storage::<InBackpack>();
         let player_entity = self.ecs.fetch::<Entity>();
         let equipped = self.ecs.read_storage::<Equipped>();
+        let seen_things = self.ecs.read_storage::<SeenByPlayer>();
 
         let mut to_delete: Vec<Entity> = Vec::new();
         for entity in entities.join() {
@@ -552,6 +559,11 @@ impl State {
                 if eq.owner == *player_entity {
                     should_delete = false;
                 }
+            }
+
+            let seen = seen_things.get(entity);
+            if seen.is_some() {
+                should_delete = false;
             }
 
             if should_delete {
@@ -604,7 +616,7 @@ impl State {
         self.ecs.insert(Stats::new());
         self.ecs.insert(Map::new(1));
         self.ecs.insert(Point::new(0, 0));
-        self.ecs.insert(RunState::PreRun);
+        self.ecs.insert(RunState::LevelStart);
         self.ecs.insert(particle_system::ParticleBuilder::new());
         self.ecs.insert(gamelog::GameLog::new(vec![
             "you find yourself in a dark af forest...".to_string(),
