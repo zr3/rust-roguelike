@@ -81,10 +81,10 @@ pub fn delete_the_dead(ecs: &mut World) {
                     }
                     Some(_) => {
                         let mut runwriter = ecs.write_resource::<RunState>();
-                        if *runwriter == RunState::GameOver {
+                        if *runwriter == RunState::OuterGameOver {
                             return;
                         }
-                        *runwriter = RunState::GameOver;
+                        *runwriter = RunState::OuterGameOver;
                         let mut player_renderables = ecs.write_storage::<Renderable>();
                         let mut pr = player_renderables
                             .get_mut(entity)

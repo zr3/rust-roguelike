@@ -45,7 +45,7 @@ impl<'a> System<'a> for MonsterAI {
             mut rng,
         ) = data;
 
-        if *runstate != RunState::MonsterTurn {
+        if *runstate != RunState::CoreMonsterTurn {
             return;
         }
 

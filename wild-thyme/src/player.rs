@@ -86,7 +86,7 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
 
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
-        None => return RunState::AwaitingInput,
+        None => return RunState::CoreAwaitingInput,
         Some(key) => match key {
             VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
                 try_move_player(-1, 0, &mut gs.ecs)
@@ -106,12 +106,12 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad3 | VirtualKeyCode::B => try_move_player(1, 1, &mut gs.ecs),
             VirtualKeyCode::Numpad1 | VirtualKeyCode::N => try_move_player(-1, 1, &mut gs.ecs),
 
-            VirtualKeyCode::I => return RunState::ShowInventory,
-            VirtualKeyCode::D => return RunState::ShowDropItem,
-            VirtualKeyCode::R => return RunState::ShowRemoveItem,
+            VirtualKeyCode::I => return RunState::MenuInventory,
+            VirtualKeyCode::D => return RunState::MenuDropItem,
+            VirtualKeyCode::R => return RunState::MenuRemoveItem,
 
             VirtualKeyCode::Return => {
-                return RunState::ShowTooltips {
+                return RunState::ActionShowObjects {
                     current: 0,
                     total: get_visible_tooltips(&gs.ecs).len() as i32,
                 }
@@ -121,7 +121,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 if !get_item(&mut gs.ecs) {
                     if try_next_level(&mut gs.ecs) {
                         gs.ecs.fetch_mut::<Stats>().portals_taken += 1;
-                        return RunState::FadeToNextLevel {
+                        return RunState::CoreFadeToNextLevel {
                             level: gs.ecs.fetch::<Map>().depth + 1,
                             row: 0,
                         };
@@ -137,7 +137,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                         log.log(format!(""));
                         log.log("you did it! the cake is baking..".to_string());
                         window_fx::player_won_effect(&gs.ecs.fetch::<Stats>());
-                        return RunState::CakeReveal {
+                        return RunState::OuterCakeReveal {
                             row: 0,
                             iteration: 0,
                         };
@@ -147,10 +147,10 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 }
             }
 
-            _ => return RunState::AwaitingInput,
+            _ => return RunState::CoreAwaitingInput,
         },
     }
-    RunState::PlayerTurn
+    RunState::CorePlayerTurn
 }
 
 fn skip_turn(ecs: &mut World) -> RunState {
@@ -190,7 +190,7 @@ fn skip_turn(ecs: &mut World) -> RunState {
         player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
     }
 
-    RunState::PlayerTurn
+    RunState::CorePlayerTurn
 }
 
 fn try_next_level(ecs: &mut World) -> bool {

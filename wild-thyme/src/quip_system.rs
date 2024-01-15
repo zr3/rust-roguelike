@@ -26,7 +26,7 @@ impl<'a> System<'a> for QuipSystem {
         let (runstate, mut rng, map, mut log, names, mut quips, positions, mut particle_builder) =
             data;
 
-        if *runstate != RunState::PostTurn {
+        if *runstate != RunState::CorePostRound {
             return;
         }
 

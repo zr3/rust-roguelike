@@ -26,12 +26,12 @@ impl<'a> System<'a> for HungerSystem {
             let mut proceed = false;
 
             match *runstate {
-                RunState::PlayerTurn => {
+                RunState::CorePlayerTurn => {
                     if entity == *player_entity {
                         proceed = true;
                     }
                 }
-                RunState::MonsterTurn => {
+                RunState::CoreMonsterTurn => {
                     if entity != *player_entity {
                         proceed = true;
                     }

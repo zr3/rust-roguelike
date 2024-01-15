@@ -2,14 +2,12 @@ use std::collections::HashMap;
 
 use hunger_system::HungerSystem;
 use rltk::{GameState, Point, Rltk};
-use spawn_system::{SpawnBuilder, SpawnRequest};
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
 
 mod map;
 use map::*;
 mod player;
-use player::*;
 mod rect;
 use rect::*;
 mod components;
@@ -21,8 +19,9 @@ mod gui;
 mod inventory_system;
 mod spawners;
 use inventory_system::*;
+mod discovery_system;
+mod game_loop;
 mod hunger_system;
-mod item_tutorial_system;
 mod menu;
 mod particle_system;
 mod quip_system;
@@ -48,45 +47,50 @@ use damage_system::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
-    AwaitingInput,
-    LevelStart,
-    PlayerTurn,
-    MonsterTurn,
-    PostTurn,
-    ShowInventory,
-    ShowDropItem,
-    ShowRemoveItem,
-    ShowTargeting {
+    CoreLevelStart,
+
+    CorePreRound,
+    CoreAwaitingInput,
+    CorePlayerTurn,
+    CoreMonsterTurn,
+    CorePostRound,
+
+    CoreFadeToNextLevel {
+        level: i32,
+        row: i32,
+    },
+    CoreNextLevel {
+        level: i32,
+    },
+
+    MenuInventory,
+    MenuDropItem,
+    MenuRemoveItem,
+
+    ActionTargeting {
         range: i32,
         item: Entity,
     },
-    ShowTooltips {
+    ActionMagicMapReveal {
+        row: i32,
+        iteration: i32,
+    },
+    ActionShowObjects {
         current: i32,
         total: i32,
     },
-    HighlightItem {},
-    GameOver,
-    MainMenu {
+    ActionHighlightObjects {},
+
+    OuterMainMenu {
         menu_selection: gui::MainMenuSelection,
     },
-    SaveGame,
-    FadeToNextLevel {
-        level: i32,
-        row: i32,
-    },
-    NextLevel {
-        level: i32,
-    },
-    MagicMapReveal {
+    OuterSaveGame,
+    OuterCakeReveal {
         row: i32,
         iteration: i32,
     },
-    CakeReveal {
-        row: i32,
-        iteration: i32,
-    },
-    CakeJudge,
-    PreRound,
+    OuterCakeJudge,
+    OuterGameOver,
 }
 
 pub struct State {
@@ -97,17 +101,15 @@ pub struct UIConfig {
 }
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
-        let mut newrunstate;
-        {
-            let runstate = self.ecs.fetch::<RunState>();
-            newrunstate = *runstate;
-        }
+        let current_runstate = *self.ecs.fetch::<RunState>();
 
+        // clear terminal buffer and cleanup fx
         ctx.cls();
         particle_system::cull_dead_particles(&mut self.ecs, ctx);
 
-        match newrunstate {
-            RunState::MainMenu { .. } => {}
+        // render map if game is active
+        match current_runstate {
+            RunState::OuterMainMenu { .. } => {}
             _ => {
                 draw_map(&self.ecs, ctx);
 
@@ -132,341 +134,11 @@ impl GameState for State {
             }
         }
 
-        match newrunstate {
-            // level start
-            RunState::LevelStart => {
-                self.run_systems();
-                newrunstate = RunState::AwaitingInput;
-            }
+        // main game loop
+        let next_runstate = self.run_game_loop(ctx, current_runstate);
+        *self.ecs.fetch_mut::<RunState>() = next_runstate;
 
-            // main loop
-            RunState::PreRound => {
-                if self.ecs.fetch::<UIConfig>().highlight_discoveries {
-                    let mut item_tutorial = item_tutorial_system::ItemTutorialSystem {};
-                    item_tutorial.run_now(&self.ecs);
-                }
-                newrunstate = match *self.ecs.fetch::<RunState>() {
-                    RunState::HighlightItem {} => RunState::HighlightItem {},
-                    _ => RunState::AwaitingInput,
-                }
-            }
-            RunState::AwaitingInput => {
-                newrunstate = player_input(self, ctx);
-            }
-            RunState::PlayerTurn => {
-                self.run_systems();
-
-                newrunstate = match *self.ecs.fetch::<RunState>() {
-                    RunState::MagicMapReveal { .. } => RunState::MagicMapReveal {
-                        row: 0,
-                        iteration: 0,
-                    },
-                    _ => RunState::MonsterTurn,
-                }
-            }
-            RunState::MonsterTurn => {
-                self.run_systems();
-                newrunstate = RunState::PostTurn;
-            }
-            RunState::PostTurn => {
-                self.run_systems();
-                let mut requests = Vec::new();
-                {
-                    let sb = self.ecs.fetch::<SpawnBuilder>();
-                    for new_spawn in sb.requests.iter() {
-                        requests.push(SpawnRequest {
-                            x: new_spawn.x,
-                            y: new_spawn.y,
-                            spawn_name: new_spawn.spawn_name.clone(),
-                        });
-                    }
-                }
-                for new_spawn in requests {
-                    spawners::spawn_specific_on_point(
-                        &mut self.ecs,
-                        (new_spawn.x, new_spawn.y),
-                        &new_spawn.spawn_name,
-                    );
-                }
-                {
-                    let sb = self
-                        .ecs
-                        .get_mut::<SpawnBuilder>()
-                        .expect("SpawnBuilder should be permanently registered");
-                    sb.requests.clear();
-                }
-                self.ecs.maintain();
-                newrunstate = RunState::PreRound;
-            }
-
-            // breakout loops
-            RunState::ShowInventory => {
-                let result = gui::show_inventory(self, ctx);
-                match result.0 {
-                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
-                    gui::ItemMenuResult::NoResponse => {}
-                    gui::ItemMenuResult::Selected => {
-                        let item_entity = result.1.expect(
-                            "show_inventory always should return entity with Selected response",
-                        );
-                        let is_ranged = self.ecs.read_storage::<Ranged>();
-                        let is_item_ranged = is_ranged.get(item_entity);
-                        let is_player_teleporting = self.ecs.read_storage::<TeleportsPlayer>();
-                        if let Some(is_item_ranged) = is_item_ranged {
-                            newrunstate = RunState::ShowTargeting {
-                                range: is_item_ranged.range,
-                                item: item_entity,
-                            };
-                        } else if let Some(is_player_teleporting) =
-                            is_player_teleporting.get(item_entity)
-                        {
-                            newrunstate = RunState::NextLevel {
-                                level: is_player_teleporting.level,
-                            };
-                        } else {
-                            let mut intent = self.ecs.write_storage::<WantsToUseItem>();
-                            intent
-                                .insert(
-                                    *self.ecs.fetch::<Entity>(),
-                                    WantsToUseItem {
-                                        item: item_entity,
-                                        target: None,
-                                    },
-                                )
-                                .expect(
-                                    "should be able to insert intent to drink potion for player",
-                                );
-                            newrunstate = RunState::PlayerTurn;
-                        }
-                    }
-                }
-            }
-            RunState::ShowDropItem => {
-                let result = gui::show_drop_item(self, ctx);
-                match result.0 {
-                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
-                    gui::ItemMenuResult::NoResponse => {}
-                    gui::ItemMenuResult::Selected => {
-                        let item_entity = result.1.expect(
-                            "show_drop_item always should return entity with Selected response",
-                        );
-                        let mut intent = self.ecs.write_storage::<WantsToDropItem>();
-                        intent
-                            .insert(
-                                *self.ecs.fetch::<Entity>(),
-                                WantsToDropItem { item: item_entity },
-                            )
-                            .expect("should be able to insert intent to drop item for player");
-                        newrunstate = RunState::PlayerTurn;
-                    }
-                }
-            }
-            RunState::ShowRemoveItem => {
-                let result = gui::show_remove_item(self, ctx);
-                match result.0 {
-                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
-                    gui::ItemMenuResult::NoResponse => {}
-                    gui::ItemMenuResult::Selected => {
-                        let item_entity = result.1.expect(
-                            "show_remove_item always should return entity with Selected response",
-                        );
-                        let mut intent = self.ecs.write_storage::<WantsToRemoveItem>();
-                        intent
-                            .insert(
-                                *self.ecs.fetch::<Entity>(),
-                                WantsToRemoveItem { item: item_entity },
-                            )
-                            .expect("should be able to insert intent to unequip item for player");
-                        newrunstate = RunState::PlayerTurn;
-                    }
-                }
-            }
-            RunState::ShowTargeting { range, item } => {
-                let result = gui::ranged_target(self, ctx, range);
-                match result.0 {
-                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
-                    gui::ItemMenuResult::NoResponse => {}
-                    gui::ItemMenuResult::Selected => {
-                        let mut intent = self.ecs.write_storage::<WantsToUseItem>();
-                        intent
-                            .insert(
-                                *self.ecs.fetch::<Entity>(),
-                                WantsToUseItem {
-                                    item,
-                                    target: result.1,
-                                },
-                            )
-                            .expect("should be able to insert intent to use item");
-                        newrunstate = RunState::PlayerTurn;
-                    }
-                }
-            }
-            RunState::GameOver => {
-                let result = gui::game_over(ctx, &self.ecs.fetch::<Stats>());
-                match result {
-                    gui::GameOverResult::NoSelection => {}
-                    gui::GameOverResult::QuitToMenu => {
-                        self.game_over_cleanup();
-                        newrunstate = RunState::LevelStart;
-                    }
-                }
-            }
-            RunState::MainMenu { .. } => {
-                let result = menu::main_menu(self, ctx);
-                match result {
-                    gui::MainMenuResult::NoSelection { selected } => {
-                        newrunstate = RunState::MainMenu {
-                            menu_selection: selected,
-                        }
-                    }
-                    gui::MainMenuResult::Selected { selected } => match selected {
-                        gui::MainMenuSelection::NewGame => newrunstate = RunState::LevelStart,
-                        gui::MainMenuSelection::LoadGame => {
-                            saveload_system::load_game(&mut self.ecs);
-                            newrunstate = RunState::PreRound;
-                            saveload_system::delete_save();
-                        }
-                        gui::MainMenuSelection::Quit => {
-                            ::std::process::exit(0);
-                        }
-                    },
-                }
-            }
-            RunState::SaveGame => {
-                saveload_system::save_game(&mut self.ecs);
-                newrunstate = RunState::MainMenu {
-                    menu_selection: gui::MainMenuSelection::LoadGame,
-                };
-            }
-            RunState::FadeToNextLevel { level, row } => {
-                window_fx::warp_effect();
-                let mut map = self.ecs.fetch_mut::<Map>();
-                for x in 0..MAPWIDTH as i32 {
-                    let idx = map.xy_idx(x as i32, row);
-                    map.revealed_tiles[idx] = false;
-                    map.visible_tiles[idx] = false;
-                }
-                if row as usize == MAPHEIGHT - 1 {
-                    newrunstate = RunState::NextLevel { level };
-                } else {
-                    newrunstate = RunState::FadeToNextLevel {
-                        level,
-                        row: row + 1,
-                    };
-                }
-            }
-            RunState::NextLevel { level } => {
-                self.goto_level(level);
-                let mut stats = self.ecs.fetch_mut::<Stats>();
-                if stats.deepest_level < level {
-                    stats.deepest_level = level;
-                }
-                window_fx::narrate(&stats);
-                newrunstate = RunState::LevelStart;
-            }
-            RunState::MagicMapReveal { row, iteration } => {
-                let mut map = self.ecs.fetch_mut::<Map>();
-                for x in (0..MAPWIDTH as i32).filter(|x| ((x + row) % 2) == iteration) {
-                    let idx = map.xy_idx(x as i32, row);
-                    map.revealed_tiles[idx] = true;
-                }
-                if row as usize == MAPHEIGHT - 1 {
-                    if iteration == 1 {
-                        newrunstate = RunState::MonsterTurn;
-                    } else {
-                        newrunstate = RunState::MagicMapReveal {
-                            row: 0,
-                            iteration: iteration + 1,
-                        };
-                    }
-                } else {
-                    newrunstate = RunState::MagicMapReveal {
-                        row: row + 1,
-                        iteration,
-                    };
-                }
-            }
-            RunState::CakeReveal { row, iteration } => {
-                let mut map = self.ecs.fetch_mut::<Map>();
-                for x in (0..MAPWIDTH as i32).filter(|x| ((x + row) % 2) == iteration) {
-                    let idx = map.xy_idx(x as i32, row);
-                    map.revealed_tiles[idx] = false;
-                }
-                if row as usize == MAPHEIGHT - 1 {
-                    if iteration == 1 {
-                        newrunstate = RunState::CakeJudge;
-                    } else {
-                        newrunstate = RunState::CakeReveal {
-                            row: 0,
-                            iteration: iteration + 1,
-                        };
-                    }
-                } else {
-                    newrunstate = RunState::CakeReveal {
-                        row: row + 1,
-                        iteration,
-                    };
-                }
-            }
-            RunState::CakeJudge => {
-                let result = gui::cake_judge(ctx, &self.ecs.fetch::<Stats>());
-                match result {
-                    gui::GameOverResult::NoSelection => {}
-                    gui::GameOverResult::QuitToMenu => {
-                        self.game_over_cleanup();
-                        newrunstate = RunState::LevelStart;
-                    }
-                }
-            }
-            RunState::ShowTooltips { current, total } => match ctx.key {
-                Some(rltk::VirtualKeyCode::Space) => {
-                    if current < total - 1 {
-                        newrunstate = RunState::ShowTooltips {
-                            current: current + 1,
-                            total,
-                        };
-                    } else {
-                        newrunstate = RunState::AwaitingInput;
-                    }
-                }
-                _ => {}
-            },
-            RunState::HighlightItem {} => {
-                match ctx.key {
-                    Some(rltk::VirtualKeyCode::Space) | Some(rltk::VirtualKeyCode::Escape) => {
-                        let mut to_delete = Vec::new();
-                        {
-                            for (entity, _highlight_item) in (
-                                &self.ecs.entities(),
-                                &self.ecs.read_storage::<HighlightItem>(),
-                            )
-                                .join()
-                            {
-                                to_delete.push(entity);
-                            }
-                        }
-                        for entity in to_delete {
-                            let _ = self.ecs.delete_entity(entity);
-                        }
-                        newrunstate = RunState::PreRound;
-                    }
-                    _ => {}
-                }
-                match ctx.key {
-                    Some(rltk::VirtualKeyCode::Escape) => {
-                        let mut ui_config = self.ecs.write_resource::<UIConfig>();
-                        ui_config.highlight_discoveries = false;
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        {
-            let mut runwriter = self.ecs.write_resource::<RunState>();
-            *runwriter = newrunstate;
-        }
-
+        // clean up dead entities
         delete_the_dead(&mut self.ecs);
     }
 }
@@ -626,7 +298,7 @@ impl State {
         self.ecs.insert(Stats::new());
         self.ecs.insert(Map::new(1));
         self.ecs.insert(Point::new(0, 0));
-        self.ecs.insert(RunState::LevelStart);
+        self.ecs.insert(RunState::CoreLevelStart);
         self.ecs.insert(particle_system::ParticleBuilder::new());
         self.ecs.insert(gamelog::GameLog::new(vec![
             "you find yourself in a dark af forest...".to_string(),
@@ -671,7 +343,7 @@ fn main() -> rltk::BError {
     // build context and game state
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
-        .with_title("and we had a wild thyme")
+        .with_title("..And We Had a Wild Thyme")
         .with_gutter(16)
         .with_tile_dimensions(16, 16)
         .build()?;
@@ -684,7 +356,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<VisibleToPlayer>();
     gs.ecs.register::<SeenByPlayer>();
-    gs.ecs.register::<HighlightItem>();
+    gs.ecs.register::<HighlightObject>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<BlocksTile>();

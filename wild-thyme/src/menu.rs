@@ -35,7 +35,7 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
         RGB::from_hex("#808030").expect("hardcoded"),
         RGB::named(rltk::BLACK),
     );
-    if let RunState::MainMenu {
+    if let RunState::OuterMainMenu {
         menu_selection: selection,
     } = *runstate
     {

@@ -36,7 +36,7 @@ pub struct VisibleToPlayer {}
 pub struct SeenByPlayer {}
 
 #[derive(Component, Serialize, Deserialize, Clone)]
-pub struct HighlightItem {}
+pub struct HighlightObject {}
 
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Monster {}

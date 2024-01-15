@@ -391,7 +391,7 @@ impl<'a> System<'a> for UseItemSystem {
             if let Some(_item_maps) = item_maps {
                 gamelog.log(format!("YOU can now SEE this level!"));
                 item_was_used = true;
-                *runstate = RunState::MagicMapReveal {
+                *runstate = RunState::ActionMagicMapReveal {
                     row: 0,
                     iteration: 0,
                 };

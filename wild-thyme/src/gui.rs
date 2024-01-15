@@ -4,7 +4,7 @@ use specs::prelude::*;
 
 use crate::{
     components::{
-        Backpack, CombatStats, Equipped, Hidden, HighlightItem, HungerClock, HungerState,
+        Backpack, CombatStats, Equipped, Hidden, HighlightObject, HungerClock, HungerState,
         InBackpack, Viewshed,
     },
     get_visible_tooltips,
@@ -112,7 +112,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     // tab tooltips
     let run_state = ecs.fetch::<RunState>();
     match *run_state {
-        RunState::ShowTooltips { current, .. } => {
+        RunState::ActionShowObjects { current, .. } => {
             let tooltip = &get_visible_tooltips(ecs)[current as usize];
             draw_tooltip_at_pos(ecs, ctx, (tooltip.0.x, tooltip.0.y));
             ctx.print_color(
@@ -123,9 +123,9 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 "SPOTTING things! Press [SPACE]..",
             );
         }
-        RunState::HighlightItem {} => {
+        RunState::ActionHighlightObjects {} => {
             for (_highlight_item, position) in (
-                &ecs.read_storage::<HighlightItem>(),
+                &ecs.read_storage::<HighlightObject>(),
                 &ecs.read_storage::<Position>(),
             )
                 .join()

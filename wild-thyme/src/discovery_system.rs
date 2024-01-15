@@ -1,16 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    components::{HighlightItem, Name, Position, SeenByPlayer, VisibleToPlayer},
+    components::{HighlightObject, Name, Position, SeenByPlayer, VisibleToPlayer},
     gamelog::GameLog,
     RunState,
 };
 
 use specs::prelude::*;
 
-pub struct ItemTutorialSystem {}
+pub struct DiscoverySystem {}
 
-impl<'a> System<'a> for ItemTutorialSystem {
+impl<'a> System<'a> for DiscoverySystem {
     type SystemData = (
         WriteExpect<'a, GameLog>,
         WriteExpect<'a, RunState>,
@@ -18,7 +18,7 @@ impl<'a> System<'a> for ItemTutorialSystem {
         WriteStorage<'a, SeenByPlayer>,
         WriteStorage<'a, Name>,
         WriteStorage<'a, Position>,
-        WriteStorage<'a, HighlightItem>,
+        WriteStorage<'a, HighlightObject>,
         Entities<'a>,
     );
 
@@ -55,13 +55,13 @@ impl<'a> System<'a> for ItemTutorialSystem {
             // add entity to display a tooltip
             let highlight_entity = entities.create();
             let _ = positions.insert(highlight_entity, position.clone());
-            let _ = highlights.insert(highlight_entity, HighlightItem {});
+            let _ = highlights.insert(highlight_entity, HighlightObject {});
             // log to record the new sighting
             log.log(format!("YOU saw {} for the first time.", name.name));
         }
         // set runstate to view stack of new things and log
         if !new_sights.is_empty() {
-            *runstate = RunState::HighlightItem {};
+            *runstate = RunState::ActionHighlightObjects {};
         }
     }
 }
