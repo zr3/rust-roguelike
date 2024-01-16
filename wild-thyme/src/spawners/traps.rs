@@ -58,10 +58,10 @@ pub fn berry_bush(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name {
-            name: "BUSH".to_string(),
+            name: "GOODBERRY BUSH".to_string(),
         })
         .with(EntryTrigger {
-            verb: "breaks and GOODBERRIES scatter".to_string(),
+            verb: "pops".to_string(),
         })
         .with(SpawnsMobs {
             mob_type: "GOODBERRY".to_string(),
@@ -82,10 +82,10 @@ pub fn bird_nest(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name {
-            name: "NEST".to_string(),
+            name: "ANGRY SPARROW NEST".to_string(),
         })
         .with(EntryTrigger {
-            verb: "breaks! and ANGRY SPARROWS appear".to_string(),
+            verb: "breaks".to_string(),
         })
         .with(SpawnsMobs {
             mob_type: "SPARROW".to_string(),
@@ -106,10 +106,10 @@ pub fn ostrich_nest(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name {
-            name: "NEST".to_string(),
+            name: "ANGRY OSTRICH NEST".to_string(),
         })
         .with(EntryTrigger {
-            verb: "breaks! and ANGRY OSTRICHES appear".to_string(),
+            verb: "breaks".to_string(),
         })
         .with(SpawnsMobs {
             mob_type: "OSTRICH".to_string(),
@@ -130,10 +130,10 @@ pub fn dino_nest(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name {
-            name: "NEST".to_string(),
+            name: "ANGRY DINO NEST".to_string(),
         })
         .with(EntryTrigger {
-            verb: "breaks! and ANGRY DINOS appear".to_string(),
+            verb: "breaks".to_string(),
         })
         .with(SpawnsMobs {
             mob_type: "DILOPHOSAURUS".to_string(),
