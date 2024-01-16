@@ -68,7 +68,7 @@ jobs:
     - name: Install
       run: bun install
     - name: Copy wasm and built js
-      run: cp wild-thyme/*.wasm public/wasm/ && cp wild-thyme/*.js public/wasm/
+      run: mkdir public/wasm && cp wild-thyme/*.wasm public/wasm/ && cp wild-thyme/*.js public/wasm/
     - name: Build
       run: bun run build
     - name: Debug workflow
