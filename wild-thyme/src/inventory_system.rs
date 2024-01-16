@@ -26,6 +26,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
         WriteStorage<'a, InBackpack>,
         WriteStorage<'a, Backpack>,
         WriteExpect<'a, Stats>,
+        WriteExpect<'a, ParticleBuilder>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -38,6 +39,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
             mut backpack_items,
             mut backpacks,
             mut stats,
+            mut particle_builder,
         ) = data;
 
         for pickup in wants_pickup.join() {
@@ -70,6 +72,17 @@ impl<'a> System<'a> for ItemCollectionSystem {
                             .expect("items should always have Name")
                             .name
                     ));
+                    let pos = positions
+                        .get(*player_entity)
+                        .expect("player should always have pos");
+                    particle_builder.request(
+                        pos.x,
+                        pos.y,
+                        rltk::RGB::from_hex("#e0c080").expect("hardcoded"),
+                        rltk::RGB::named(rltk::BLACK),
+                        rltk::to_cp437('‼'),
+                        150.0,
+                    );
                 } else {
                     gamelog.log(format!(
                         "YOU pick up the {}.",

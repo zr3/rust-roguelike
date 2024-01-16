@@ -93,7 +93,7 @@ impl<'a> System<'a> for ParticleSpawnSystem {
                         fg: new_particle.fg,
                         bg: new_particle.bg,
                         glyph: new_particle.glyph,
-                        render_order: 0,
+                        render_order: -1,
                     },
                 )
                 .expect("should be able to insert renderables");

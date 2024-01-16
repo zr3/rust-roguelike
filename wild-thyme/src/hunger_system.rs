@@ -1,9 +1,10 @@
 use specs::prelude::*;
 
 use crate::{
-    components::{HungerClock, HungerState, SufferDamage},
+    components::{HungerClock, HungerState, Position, SufferDamage},
     gamelog::GameLog,
-    RunState,
+    particle_system::ParticleBuilder,
+    window_fx, RunState,
 };
 
 pub struct HungerSystem {}
@@ -16,11 +17,21 @@ impl<'a> System<'a> for HungerSystem {
         ReadExpect<'a, RunState>,
         WriteStorage<'a, SufferDamage>,
         WriteExpect<'a, GameLog>,
+        ReadStorage<'a, Position>,
+        WriteExpect<'a, ParticleBuilder>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut hunger_clock, player_entity, runstate, mut inflict_damage, mut log) =
-            data;
+        let (
+            entities,
+            mut hunger_clock,
+            player_entity,
+            runstate,
+            mut inflict_damage,
+            mut log,
+            positions,
+            mut particle_builder,
+        ) = data;
 
         for (entity, mut clock) in (&entities, &mut hunger_clock).join() {
             let mut proceed = false;
@@ -61,11 +72,34 @@ impl<'a> System<'a> for HungerSystem {
                             clock.state = HungerState::Starving;
                             if entity == *player_entity {
                                 log.log("YOU are STARVING! :(".to_string());
+                                let pos = positions
+                                    .get(*player_entity)
+                                    .expect("player should always have pos");
+                                particle_builder.request(
+                                    pos.x,
+                                    pos.y,
+                                    rltk::RGB::named(rltk::TOMATO),
+                                    rltk::RGB::named(rltk::BLACK),
+                                    rltk::to_cp437('‼'),
+                                    150.0,
+                                );
+                                window_fx::nudge_effect();
                             }
                         }
                         HungerState::Starving => {
                             if entity == *player_entity {
                                 log.log("YOU feel pain from the hunger :(".to_string());
+                                let pos = positions
+                                    .get(*player_entity)
+                                    .expect("player should always have pos");
+                                particle_builder.request(
+                                    pos.x,
+                                    pos.y,
+                                    rltk::RGB::named(rltk::TOMATO),
+                                    rltk::RGB::named(rltk::BLACK),
+                                    rltk::to_cp437('‼'),
+                                    150.0,
+                                );
                             }
                             SufferDamage::new_damage(&mut inflict_damage, entity, 1);
                         }
