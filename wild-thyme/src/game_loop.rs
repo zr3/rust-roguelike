@@ -17,8 +17,8 @@ use rltk::Rltk;
 use specs::prelude::*;
 
 impl State {
-    pub fn run_game_loop(&mut self, ctx: &mut Rltk, newrunstate: RunState) -> RunState {
-        match newrunstate {
+    pub fn run_game_loop(&mut self, ctx: &mut Rltk, current_runstate: RunState) -> RunState {
+        match current_runstate {
             // core game loop
             RunState::CoreLevelStart => {
                 self.run_systems();
@@ -116,7 +116,7 @@ impl State {
                 let result = gui::show_inventory(self, ctx);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => return RunState::CoreAwaitingInput,
-                    gui::ItemMenuResult::NoResponse => return newrunstate,
+                    gui::ItemMenuResult::NoResponse => return current_runstate,
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.expect(
                             "show_inventory always should return entity with Selected response",
@@ -157,7 +157,7 @@ impl State {
                 let result = gui::show_drop_item(self, ctx);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => return RunState::CoreAwaitingInput,
-                    gui::ItemMenuResult::NoResponse => return newrunstate,
+                    gui::ItemMenuResult::NoResponse => return current_runstate,
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.expect(
                             "show_drop_item always should return entity with Selected response",
@@ -177,7 +177,7 @@ impl State {
                 let result = gui::show_remove_item(self, ctx);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => return RunState::CoreAwaitingInput,
-                    gui::ItemMenuResult::NoResponse => return newrunstate,
+                    gui::ItemMenuResult::NoResponse => return current_runstate,
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.expect(
                             "show_remove_item always should return entity with Selected response",
@@ -199,7 +199,7 @@ impl State {
                 let result = gui::ranged_target(self, ctx, range);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => return RunState::CoreAwaitingInput,
-                    gui::ItemMenuResult::NoResponse => return newrunstate,
+                    gui::ItemMenuResult::NoResponse => return current_runstate,
                     gui::ItemMenuResult::Selected => {
                         let mut intent = self.ecs.write_storage::<WantsToUseItem>();
                         intent
@@ -248,9 +248,16 @@ impl State {
                         return RunState::CoreAwaitingInput;
                     }
                 }
-                _ => return newrunstate,
+                _ => return current_runstate,
             },
             RunState::ActionHighlightObjects {} => {
+                match ctx.key {
+                    Some(rltk::VirtualKeyCode::Escape) => {
+                        let mut ui_config = self.ecs.write_resource::<UIConfig>();
+                        ui_config.highlight_discoveries = false;
+                    }
+                    _ => {}
+                }
                 match ctx.key {
                     Some(rltk::VirtualKeyCode::Space) | Some(rltk::VirtualKeyCode::Escape) => {
                         let mut to_delete = Vec::new();
@@ -271,14 +278,7 @@ impl State {
                     }
                     _ => {}
                 }
-                match ctx.key {
-                    Some(rltk::VirtualKeyCode::Escape) => {
-                        let mut ui_config = self.ecs.write_resource::<UIConfig>();
-                        ui_config.highlight_discoveries = false;
-                    }
-                    _ => {}
-                }
-                return newrunstate;
+                return current_runstate;
             }
 
             // outer loop states
@@ -334,7 +334,7 @@ impl State {
             RunState::OuterCakeJudge => {
                 let result = gui::cake_judge(ctx, &self.ecs.fetch::<Stats>());
                 match result {
-                    gui::GameOverResult::NoSelection => return newrunstate,
+                    gui::GameOverResult::NoSelection => return current_runstate,
                     gui::GameOverResult::QuitToMenu => {
                         self.game_over_cleanup();
                         return RunState::CoreLevelStart;
@@ -344,7 +344,7 @@ impl State {
             RunState::OuterGameOver => {
                 let result = gui::game_over(ctx, &self.ecs.fetch::<Stats>());
                 match result {
-                    gui::GameOverResult::NoSelection => return newrunstate,
+                    gui::GameOverResult::NoSelection => return current_runstate,
                     gui::GameOverResult::QuitToMenu => {
                         self.game_over_cleanup();
                         return RunState::CoreLevelStart;
