@@ -26,10 +26,8 @@ impl State {
             }
 
             RunState::CorePreRound => {
-                if self.ecs.fetch::<UIConfig>().highlight_discoveries {
-                    let mut discovery = discovery_system::DiscoverySystem {};
-                    discovery.run_now(&self.ecs);
-                }
+                let mut discovery = discovery_system::DiscoverySystem {};
+                discovery.run_now(&self.ecs);
                 return match *self.ecs.fetch::<RunState>() {
                     RunState::ActionHighlightObjects {} => RunState::ActionHighlightObjects {},
                     _ => RunState::CoreAwaitingInput,

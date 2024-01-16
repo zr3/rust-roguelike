@@ -29,6 +29,7 @@ struct ParticleRequest {
     bg: RGB,
     glyph: rltk::FontCharType,
     lifetime: f32,
+    order: i32,
 }
 
 pub struct ParticleBuilder {
@@ -58,6 +59,28 @@ impl ParticleBuilder {
             bg,
             glyph,
             lifetime,
+            order: -1,
+        });
+    }
+
+    pub fn request_with_order(
+        &mut self,
+        x: i32,
+        y: i32,
+        fg: RGB,
+        bg: RGB,
+        glyph: rltk::FontCharType,
+        lifetime: f32,
+        order: i32,
+    ) {
+        self.requests.push(ParticleRequest {
+            x,
+            y,
+            fg,
+            bg,
+            glyph,
+            lifetime,
+            order,
         });
     }
 }
@@ -93,7 +116,7 @@ impl<'a> System<'a> for ParticleSpawnSystem {
                         fg: new_particle.fg,
                         bg: new_particle.bg,
                         glyph: new_particle.glyph,
-                        render_order: -1,
+                        render_order: new_particle.order,
                     },
                 )
                 .expect("should be able to insert renderables");

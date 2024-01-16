@@ -47,6 +47,7 @@ pub fn dart_gun(ecs: &mut World, x: i32, y: i32) {
             name: "DART GUN".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 3 })
         .marked::<SimpleMarker<SerializeMe>>()
@@ -66,6 +67,7 @@ pub fn sparkling_powder(ecs: &mut World, x: i32, y: i32) {
             name: "SPARKLING POWDER".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(Consumable {})
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 20 })
@@ -331,6 +333,7 @@ pub fn cake_knife(ecs: &mut World, x: i32, y: i32) {
             name: "CAKE KNIFE".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(Equippable {
             slot: EquipmentSlot::Melee,
         })
@@ -363,6 +366,7 @@ pub fn bark_armor(ecs: &mut World, x: i32, y: i32) {
             name: "BARK ARMOR".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(Equippable {
             slot: EquipmentSlot::Shield,
         })
@@ -425,6 +429,7 @@ pub fn thyme(ecs: &mut World, x: i32, y: i32) {
             name: "GOOD THYME".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(GoodThyme {})
         .with(ProvidesFood {})
         .with(Consumable {})
@@ -493,6 +498,7 @@ pub fn friendly_crow(ecs: &mut World, x: i32, y: i32) {
             name: "FRIENDLY CROW".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(MagicMapper {})
         .with(Consumable {})
         .with(CakeIngredient {
@@ -523,6 +529,7 @@ pub fn friendly_eagle(ecs: &mut World, x: i32, y: i32) {
             name: "FRIENDLY EAGLE".to_string(),
         })
         .with(Item {})
+        .with(Rare {})
         .with(TeleportsPlayer { level: 1 })
         .with(Consumable {})
         .with(CakeIngredient {

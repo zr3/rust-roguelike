@@ -104,6 +104,9 @@ impl SufferDamage {
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Item {}
 
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Rare {}
+
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct CakeIngredient {
     pub adjective: String,
