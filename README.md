@@ -58,11 +58,9 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 
 ✔️ m6: cicd, auth, backend
 
-  m7: cleanup
+  m7: cleanup, bug fixes and feedback
 
-  m8: bug fixes and feedback
-
-  m9: final polish
+  m8: final polish
 
 ## playtest notes
 
@@ -86,3 +84,8 @@ other ideas:
 - clearer notifications: backpack full! starving! what you picked up!
 - color code items based on value?
 - zelda-style item tutorials, show what things are the first time you see them
+
+more ideas:
+- shorten game, took an hour to beat
+- maybe only 5 levels to the druid, newgame+ with buffs after each cake that let you get deeper and deeper
+
