@@ -18,7 +18,7 @@ pub fn rock(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumable {})
         .with(Ranged { range: 6 })
-        .with(InflictsDamage { damage: 8 })
+        .with(InflictsDamage { damage: 7 })
         .with(CakeIngredient {
             adjective: "HARD".to_string(),
             super_adjective: "GRAVELLY".to_string(),
@@ -48,7 +48,7 @@ pub fn dart_gun(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(Ranged { range: 6 })
-        .with(InflictsDamage { damage: 2 })
+        .with(InflictsDamage { damage: 3 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
