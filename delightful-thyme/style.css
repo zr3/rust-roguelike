@@ -20,11 +20,7 @@ body.dim {
     top: 0;
     bottom: 0;
     left: 20px;
-    display: flex;
-    justify-content: center;
     width: 65vw;
-    align-items: center;
-    flex-direction: column;
     font-family: "PC Senior", monospace;
     background-image: url('img/redwood.avif');
     background-size: 10000px 10000px;
@@ -128,4 +124,18 @@ body.dim {
   from {
     width: 0
   }
+}
+#fullscreen-controls {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    right: 10px;
+    color: #aaa;
+    font-size: 32px;
+    transform: scale(1.0);
+    transition: transform 0.2s ease-out;
+}
+#fullscreen-controls:hover {
+    transform: scale(1.1);
+    cursor: pointer;
 }

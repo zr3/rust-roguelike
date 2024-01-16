@@ -34,12 +34,12 @@
         ></feDisplacementMap>
       </filter>
     </svg>
+    <section id="game-window">
+      <canvas id="canvas" width="1280" height="800"></canvas>
+    </section>
     <section id="top-text" class="text-box">
     </section>
     <section id="input-window">
-    </section>
-    <section id="game-window">
-      <canvas id="canvas" width="1280" height="800"></canvas>
     </section>
     <section id="bottom-text" class="text-box hidden">
       <p>[ARROW KEYS]/[UHJK] : move</p>
@@ -47,11 +47,10 @@
       <p>[I] : inventory</p>
       <p>[D] : drop item on ground</p>
       <p>[R] : remove (unwear/unwield) an item</p>
-      <p>[ENTER] : see wtf is on the screen (scan all)</p>
-      <p>[MOUSE HOVER] : see wtf is on the screen (under mouse)</p>
-      <p>[F5] : restart</p>
-      <p>[F11] : fullscreen</p>
+      <p>[ENTER] : see what is on the screen (scan all)</p>
+      <p>[MOUSE HOVER] : see what is on the screen (under mouse)</p>
     </section>
+    <div id="fullscreen-controls" title="Toggle full screen">⛶</div>
     <script src="./wasm/and_we_had_a_wild_thyme.js"></script>
     <script type="module" src="./wild-thyme/windowfx.ts"></script>
     <script type="module" src="/main.js"></script>

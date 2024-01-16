@@ -13,3 +13,11 @@ function shiftbg() {
   }
 }
 window.setTimeout(shiftbg, Math.random() * 5000);
+
+document.getElementById('fullscreen-controls').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+});
