@@ -7,7 +7,7 @@ use crate::{
     },
     map::Map,
     particle_system::ParticleBuilder,
-    stats::Stats,
+    stats::OverallStats,
     RunState,
 };
 
@@ -25,7 +25,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
         ReadStorage<'a, Name>,
         WriteStorage<'a, InBackpack>,
         WriteStorage<'a, Backpack>,
-        WriteExpect<'a, Stats>,
+        WriteExpect<'a, OverallStats>,
         WriteExpect<'a, ParticleBuilder>,
     );
 
@@ -133,7 +133,7 @@ impl<'a> System<'a> for UseItemSystem {
         ReadStorage<'a, TeleportsPlayer>,
         WriteStorage<'a, Backpack>,
         ReadStorage<'a, GoodThyme>,
-        WriteExpect<'a, Stats>,
+        WriteExpect<'a, OverallStats>,
     );
 
     fn run(&mut self, data: Self::SystemData) {

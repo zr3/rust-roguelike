@@ -16,6 +16,7 @@ impl GameLog {
         GameLog { entries }
     }
     pub fn log(&mut self, entry: String) {
+        #[allow(unused_unsafe)]
         unsafe {
             log(&entry);
         }

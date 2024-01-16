@@ -144,7 +144,7 @@ impl GameState for State {
 }
 
 fn calculate_cake(ecs: &mut World) {
-    let mut stats = ecs.fetch_mut::<Stats>();
+    let mut stats = ecs.fetch_mut::<OverallStats>();
     let map = ecs.fetch::<Map>();
     let ingredients = ecs.read_storage::<CakeIngredient>();
     let positions = ecs.read_storage::<Position>();
@@ -268,8 +268,7 @@ impl State {
 
         let player_entity = self.ecs.fetch::<Entity>();
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
-        gamelog
-            .log("YOU pass through the forest portal! and rest for a few minutes...".to_string());
+        gamelog.log("YOU pass through the forest portal and rest for a few minutes...".to_string());
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
@@ -295,7 +294,8 @@ impl State {
     fn reset_game(&mut self) {
         let player_entity = spawners::player(&mut self.ecs, 0, 0);
         self.ecs.insert(player_entity);
-        self.ecs.insert(Stats::new());
+        self.ecs.insert(OverallStats::new());
+        self.ecs.insert(LevelStats::new(1, 0, 30));
         self.ecs.insert(Map::new(1));
         self.ecs.insert(Point::new(0, 0));
         self.ecs.insert(RunState::CoreLevelStart);
@@ -303,6 +303,9 @@ impl State {
         self.ecs.insert(gamelog::GameLog::new(vec![
             "you find yourself in a dark af forest...".to_string(),
         ]));
+        self.ecs.insert(UIConfig {
+            highlight_discoveries: true,
+        });
         self.generate_world_map(1);
     }
 
@@ -409,9 +412,6 @@ fn main() -> rltk::BError {
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     gs.ecs.insert(spawn_system::SpawnBuilder::new());
     gs.ecs.insert(rex_assets::RexAssets::new());
-    gs.ecs.insert(UIConfig {
-        highlight_discoveries: true,
-    });
 
     // build the first level
     gs.reset_game();

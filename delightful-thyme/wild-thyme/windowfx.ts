@@ -41,6 +41,7 @@ globalThis.windowfx = {
     traps_triggered: number,
     portals_taken: number,
     steps_taken: number,
+    level_stats: any,
   ) {
     const stats = {
       deepest_level,
@@ -51,6 +52,7 @@ globalThis.windowfx = {
       traps_triggered,
       portals_taken,
       steps_taken,
+      level_stats,
     };
     console.log(stats);
     if (stats.deepest_level % 10 > 0) {

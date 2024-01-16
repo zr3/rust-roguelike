@@ -10,7 +10,7 @@ use crate::{
     saveload_system,
     spawn_system::{SpawnBuilder, SpawnRequest},
     spawners,
-    stats::Stats,
+    stats::{LevelStats, OverallStats},
     window_fx, RunState, State, UIConfig,
 };
 use rltk::Rltk;
@@ -100,12 +100,14 @@ impl State {
                 }
             }
             RunState::CoreNextLevel { level } => {
-                self.goto_level(level);
-                let mut stats = self.ecs.fetch_mut::<Stats>();
-                if stats.deepest_level < level {
-                    stats.deepest_level = level;
+                {
+                    let mut stats = self.ecs.fetch_mut::<OverallStats>();
+                    let mut level_stats = self.ecs.fetch_mut::<LevelStats>();
+                    stats.apply_level(*level_stats);
+                    window_fx::narrate(&stats, &level_stats);
+                    level_stats.reset(level);
                 }
-                window_fx::narrate(&stats);
+                self.goto_level(level);
                 return RunState::CoreLevelStart;
             }
 
@@ -330,7 +332,7 @@ impl State {
                 }
             }
             RunState::OuterCakeJudge => {
-                let result = gui::cake_judge(ctx, &self.ecs.fetch::<Stats>());
+                let result = gui::cake_judge(ctx, &self.ecs.fetch::<OverallStats>());
                 match result {
                     gui::GameOverResult::NoSelection => return current_runstate,
                     gui::GameOverResult::QuitToMenu => {
@@ -340,7 +342,7 @@ impl State {
                 }
             }
             RunState::OuterGameOver => {
-                let result = gui::game_over(ctx, &self.ecs.fetch::<Stats>());
+                let result = gui::game_over(ctx, &self.ecs.fetch::<OverallStats>());
                 match result {
                     gui::GameOverResult::NoSelection => return current_runstate,
                     gui::GameOverResult::QuitToMenu => {

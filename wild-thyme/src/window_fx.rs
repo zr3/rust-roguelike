@@ -1,4 +1,4 @@
-use crate::stats::Stats;
+use crate::stats::{LevelStats, OverallStats};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_namespace = windowfx)]
@@ -14,6 +14,7 @@ extern "C" {
         traps_triggered: i32,
         portals_taken: i32,
         steps_taken: i32,
+        level_stats: JsValue,
     );
     fn player_died(
         deepest_level: i32,
@@ -46,40 +47,47 @@ extern "C" {
 }
 
 pub fn warp_effect() {
+    #[allow(unused_unsafe)]
     unsafe {
         warp();
     }
 }
 
 pub fn nudge_effect() {
+    #[allow(unused_unsafe)]
     unsafe {
         nudge();
     }
 }
 
-pub fn narrate(stats: &Stats) {
+pub fn narrate(stats: &OverallStats, level_stats: &LevelStats) {
+    let serialized_level_stats =
+        serde_wasm_bindgen::to_value(&level_stats).expect("level stats should all be serializable");
+    #[allow(unused_unsafe)]
     unsafe {
         update_stats(
             stats.deepest_level,
             stats.most_items_held,
             stats.thyme_eaten,
             stats.min_hp,
-            stats.mobs_killed,
+            stats.critters_killed,
             stats.traps_triggered,
             stats.portals_taken,
             stats.steps_taken,
+            serialized_level_stats,
         );
     }
 }
 
-pub fn player_died_effect(stats: &Stats) {
+pub fn player_died_effect(stats: &OverallStats) {
+    #[allow(unused_unsafe)]
     unsafe {
         player_died(
             stats.deepest_level,
             stats.most_items_held,
             stats.thyme_eaten,
             stats.min_hp,
-            stats.mobs_killed,
+            stats.critters_killed,
             stats.traps_triggered,
             stats.portals_taken,
             stats.steps_taken,
@@ -87,14 +95,15 @@ pub fn player_died_effect(stats: &Stats) {
     }
 }
 
-pub fn player_won_effect(stats: &Stats) {
+pub fn player_won_effect(stats: &OverallStats) {
+    #[allow(unused_unsafe)]
     unsafe {
         player_won(
             stats.deepest_level,
             stats.most_items_held,
             stats.thyme_eaten,
             stats.min_hp,
-            stats.mobs_killed,
+            stats.critters_killed,
             stats.traps_triggered,
             stats.portals_taken,
             stats.steps_taken,

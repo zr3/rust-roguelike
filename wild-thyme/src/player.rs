@@ -6,7 +6,7 @@ use crate::{
     get_visible_tooltips,
     map::TileType,
     particle_system::ParticleBuilder,
-    stats::Stats,
+    stats::OverallStats,
     window_fx,
 };
 
@@ -79,7 +79,7 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
             entity_moved
                 .insert(entity, EntityMoved {})
                 .expect("should be able to add movement marker");
-            ecs.fetch_mut::<Stats>().steps_taken += 1;
+            ecs.fetch_mut::<OverallStats>().steps_taken += 1;
         }
     }
 }
@@ -120,7 +120,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
                 if !get_item(&mut gs.ecs) {
                     if try_next_level(&mut gs.ecs) {
-                        gs.ecs.fetch_mut::<Stats>().portals_taken += 1;
+                        gs.ecs.fetch_mut::<OverallStats>().portals_taken += 1;
                         return RunState::CoreFadeToNextLevel {
                             level: gs.ecs.fetch::<Map>().depth + 1,
                             row: 0,
@@ -136,7 +136,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                         log.log(format!(""));
                         log.log(format!(""));
                         log.log("you did it! the cake is baking..".to_string());
-                        window_fx::player_won_effect(&gs.ecs.fetch::<Stats>());
+                        window_fx::player_won_effect(&gs.ecs.fetch::<OverallStats>());
                         return RunState::OuterCakeReveal {
                             row: 0,
                             iteration: 0,

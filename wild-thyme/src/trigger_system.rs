@@ -12,7 +12,7 @@ use crate::{
     map::Map,
     particle_system::ParticleBuilder,
     spawn_system::SpawnBuilder,
-    stats::Stats,
+    stats::OverallStats,
 };
 
 pub struct TriggerSystem {}
@@ -35,7 +35,7 @@ impl<'a> System<'a> for TriggerSystem {
         ReadStorage<'a, SpawnsMobs>,
         WriteExpect<'a, SpawnBuilder>,
         WriteExpect<'a, RandomNumberGenerator>,
-        WriteExpect<'a, Stats>,
+        WriteExpect<'a, OverallStats>,
         ReadExpect<'a, Entity>,
         ReadStorage<'a, VisibleToPlayer>,
     );

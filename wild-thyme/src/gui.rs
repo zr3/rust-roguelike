@@ -8,7 +8,7 @@ use crate::{
         InBackpack, Viewshed,
     },
     get_visible_tooltips,
-    stats::Stats,
+    stats::OverallStats,
     RunState, State,
 };
 
@@ -605,7 +605,7 @@ fn print_stat(ctx: &mut Rltk, line: i32, stat: &str, stat_value: i32) {
     );
 }
 
-pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
+pub fn game_over(ctx: &mut Rltk, stats: &OverallStats) -> GameOverResult {
     ctx.print_color_centered(
         15,
         RGB::from_hex("#e04040").expect("hardcoded"),
@@ -615,7 +615,7 @@ pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
 
     print_stat(ctx, 17, "deepest level", stats.deepest_level);
     print_stat(ctx, 18, "THYME eaten", stats.thyme_eaten);
-    print_stat(ctx, 19, "things killed", stats.mobs_killed);
+    print_stat(ctx, 19, "things killed", stats.critters_killed);
     print_stat(ctx, 20, "portals taken", stats.portals_taken);
     print_stat(ctx, 21, "traps triggered", stats.traps_triggered);
     print_stat(ctx, 22, "steps taken", stats.steps_taken);
@@ -634,7 +634,7 @@ pub fn game_over(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
     }
 }
 
-pub fn cake_judge(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
+pub fn cake_judge(ctx: &mut Rltk, stats: &OverallStats) -> GameOverResult {
     ctx.print_color_centered(
         7,
         RGB::named(rltk::WHITE),
@@ -659,10 +659,16 @@ pub fn cake_judge(ctx: &mut Rltk, stats: &Stats) -> GameOverResult {
     print_stat(ctx, 20, "deepest level", stats.deepest_level);
     print_stat(ctx, 21, "THYME eaten", stats.thyme_eaten);
     print_stat(ctx, 22, "minimum hp", stats.min_hp);
-    print_stat(ctx, 23, "things killed", stats.mobs_killed);
-    print_stat(ctx, 24, "portals taken", stats.portals_taken);
-    print_stat(ctx, 25, "traps triggered", stats.traps_triggered);
-    print_stat(ctx, 26, "steps taken", stats.steps_taken);
+    print_stat(
+        ctx,
+        23,
+        "INNOCENT cute creatures killed",
+        stats.critters_killed,
+    );
+    print_stat(ctx, 24, "monsters killed", stats.critters_killed);
+    print_stat(ctx, 25, "portals taken", stats.portals_taken);
+    print_stat(ctx, 26, "traps triggered", stats.traps_triggered);
+    print_stat(ctx, 27, "steps taken", stats.steps_taken);
 
     ctx.print_color_centered(
         36,

@@ -1,7 +1,7 @@
 use crate::{
-    components::{DropsLoot, Name, Position, WantsToDropItem},
+    components::{DropsLoot, Herbivore, Name, Position, WantsToDropItem},
     map::Map,
-    stats::Stats,
+    stats::{LevelStats, OverallStats},
     window_fx,
 };
 
@@ -20,8 +20,9 @@ impl<'a> System<'a> for DamageSystem {
         Entities<'a>,
         ReadStorage<'a, DropsLoot>,
         WriteStorage<'a, WantsToDropItem>,
-        WriteExpect<'a, Stats>,
+        WriteExpect<'a, LevelStats>,
         ReadStorage<'a, Player>,
+        ReadStorage<'a, Herbivore>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -33,8 +34,9 @@ impl<'a> System<'a> for DamageSystem {
             entities,
             drops_loot,
             mut wants_to_drop,
-            mut game_stats,
+            mut level_stats,
             players,
+            herbivore,
         ) = data;
 
         for (entity, mut stats, damage) in (&entities, &mut stats, &damage).join() {
@@ -48,10 +50,15 @@ impl<'a> System<'a> for DamageSystem {
                 if let Some(loot) = drops_loot.get(entity) {
                     let _ = wants_to_drop.insert(entity, WantsToDropItem { item: loot.item });
                 }
+                if herbivore.get(entity).is_some() {
+                    level_stats.critters_killed += 1;
+                } else if players.get(entity).is_none() {
+                    level_stats.monsters_killed += 1;
+                }
                 window_fx::nudge_effect();
             }
             if let Some(_) = players.get(entity) {
-                game_stats.min_hp = std::cmp::min(game_stats.min_hp, stats.hp);
+                level_stats.min_hp = std::cmp::min(level_stats.min_hp, stats.hp);
             }
         }
 
@@ -76,7 +83,7 @@ pub fn delete_the_dead(ecs: &mut World) {
                         if let Some(victim_name) = victim_name {
                             log.log(format!("{} is dead", &victim_name.name));
                         }
-                        ecs.fetch_mut::<Stats>().mobs_killed += 1;
+
                         dead.push(entity);
                     }
                     Some(_) => {
@@ -94,8 +101,8 @@ pub fn delete_the_dead(ecs: &mut World) {
                         pr.bg = RGB::named(rltk::BLACK);
                         let mut log = ecs.fetch_mut::<GameLog>();
                         log.log("".to_string());
-                        log.log("RIP you. had too wild of a thyme :(".to_string());
-                        window_fx::player_died_effect(&ecs.fetch::<Stats>());
+                        log.log("RIP... YOU had too wild of a thyme :(".to_string());
+                        window_fx::player_died_effect(&ecs.fetch::<OverallStats>());
                     }
                 }
             }
