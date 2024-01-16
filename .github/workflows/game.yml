@@ -68,11 +68,11 @@ jobs:
     - name: Install
       run: bun install
     - name: Copy wasm and built js
-      run: cp wild-thyme/*.wasm public/wasm && cp wild-thyme/*.js public/wasm
+      run: cp wild-thyme/*.wasm public/wasm/ && cp wild-thyme/*.js public/wasm/
     - name: Build
       run: bun run build
     - name: Debug workflow
-      run: pwd;echo;ls -al;echo;ls -al dist;echo;ls -al public;
+      run: pwd;echo;ls -al;echo;ls -al dist;echo;ls -al public;echo;ls -al public/wasm;
     - name: Archive web build
       uses: actions/upload-artifact@v3
       with:
@@ -96,7 +96,7 @@ jobs:
         name: web-build
         path: publish
     - name: Debug workflow
-      run: pwd;echo;ls -al;
+      run: pwd;echo;ls -al;echo;ls -al wasm;
     - name: Publish to S3
       run: aws s3 sync --delete . ${{ secrets.AWS_WILD_THYME_S3BUCKET }}
     - name: Add Cloudfront invalidation
