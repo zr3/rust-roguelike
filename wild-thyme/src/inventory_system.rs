@@ -296,7 +296,7 @@ impl<'a> System<'a> for UseItemSystem {
                 None => {}
                 Some(damage) => {
                     item_was_used = false;
-                    for mob in targets.iter() {
+                    for mob in targets.iter().filter(|&m| names.contains(*m)) {
                         SufferDamage::new_damage(&mut suffer_damage, *mob, damage.damage);
                         if entity == *player_entity {
                             let mob_name = names.get(*mob).expect("targets should have name");
@@ -333,7 +333,7 @@ impl<'a> System<'a> for UseItemSystem {
                     None => {}
                     Some(confusion) => {
                         item_was_used = false;
-                        for mob in targets.iter() {
+                        for mob in targets.iter().filter(|&m| names.contains(*m)) {
                             add_confusion.push((*mob, confusion.turns));
                             if entity == *player_entity {
                                 let mob_name = names.get(*mob).expect("targets should have a name");

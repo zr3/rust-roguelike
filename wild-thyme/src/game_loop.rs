@@ -254,14 +254,14 @@ impl State {
             },
             RunState::ActionHighlightObjects {} => {
                 match ctx.key {
-                    Some(rltk::VirtualKeyCode::Escape) => {
+                    Some(rltk::VirtualKeyCode::Back) => {
                         let mut ui_config = self.ecs.write_resource::<UIConfig>();
                         ui_config.highlight_discoveries = false;
                     }
                     _ => {}
                 }
                 match ctx.key {
-                    Some(rltk::VirtualKeyCode::Space) | Some(rltk::VirtualKeyCode::Escape) => {
+                    Some(rltk::VirtualKeyCode::Space) | Some(rltk::VirtualKeyCode::Back) => {
                         let mut to_delete = Vec::new();
                         {
                             for (entity, _highlight_item) in (

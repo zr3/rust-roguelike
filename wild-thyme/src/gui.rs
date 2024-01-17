@@ -144,7 +144,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 1,
                 RGB::from_hex("#704000").expect("hardcoded"),
                 RGB::named(rltk::BLACK),
-                format!("(press [ESC] to stop tips)"),
+                format!("(press [BACKSPACE] to stop tips)"),
             );
         }
         _ => {}
@@ -305,7 +305,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         y + count as i32 + 1,
         RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
-        "[ESCAPE] to cancel",
+        "[BACKSPACE] to cancel",
     );
 
     let mut equippable: Vec<Entity> = Vec::new();
@@ -345,7 +345,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     match ctx.key {
         None => (ItemMenuResult::NoResponse, None),
         Some(key) => match key {
-            VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
+            VirtualKeyCode::Back => (ItemMenuResult::Cancel, None),
             _ => {
                 let selection = rltk::letter_to_option(key);
                 if selection > -1 && selection < count as i32 {
@@ -392,7 +392,7 @@ pub fn show_drop_item(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         y + count as i32 + 1,
         RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
-        "[ESCAPE] to cancel",
+        "[BACKSPACE] to cancel",
     );
 
     let mut equippable: Vec<Entity> = Vec::new();
@@ -432,7 +432,7 @@ pub fn show_drop_item(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     match ctx.key {
         None => (ItemMenuResult::NoResponse, None),
         Some(key) => match key {
-            VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
+            VirtualKeyCode::Back => (ItemMenuResult::Cancel, None),
             _ => {
                 let selection = rltk::letter_to_option(key);
                 if selection > -1 && selection < count as i32 {
@@ -479,7 +479,7 @@ pub fn show_remove_item(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Opti
         y + count as i32 + 1,
         RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
-        "[ESCAPE] to cancel",
+        "[BACKSPACE] to cancel",
     );
 
     let mut equippable: Vec<Entity> = Vec::new();
@@ -519,7 +519,7 @@ pub fn show_remove_item(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Opti
     match ctx.key {
         None => (ItemMenuResult::NoResponse, None),
         Some(key) => match key {
-            VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
+            VirtualKeyCode::Back => (ItemMenuResult::Cancel, None),
             _ => {
                 let selection = rltk::letter_to_option(key);
                 if selection > -1 && selection < count as i32 {
