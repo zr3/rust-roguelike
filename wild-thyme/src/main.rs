@@ -1,3 +1,5 @@
+pub const IS_DEBUG_MODE_ACTIVE: bool = true;
+
 use std::collections::HashMap;
 
 use hunger_system::HungerSystem;
@@ -29,6 +31,7 @@ mod random_table;
 mod rex_assets;
 mod saveload_system;
 mod spawn_system;
+mod stats_system;
 mod trigger_system;
 mod window_fx;
 

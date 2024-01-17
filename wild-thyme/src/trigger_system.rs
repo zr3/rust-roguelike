@@ -12,7 +12,7 @@ use crate::{
     map::Map,
     particle_system::ParticleBuilder,
     spawn_system::SpawnBuilder,
-    stats::OverallStats,
+    stats::LevelStats,
 };
 
 pub struct TriggerSystem {}
@@ -35,7 +35,7 @@ impl<'a> System<'a> for TriggerSystem {
         ReadStorage<'a, SpawnsMobs>,
         WriteExpect<'a, SpawnBuilder>,
         WriteExpect<'a, RandomNumberGenerator>,
-        WriteExpect<'a, OverallStats>,
+        WriteExpect<'a, LevelStats>,
         ReadExpect<'a, Entity>,
         ReadStorage<'a, VisibleToPlayer>,
     );
@@ -58,7 +58,7 @@ impl<'a> System<'a> for TriggerSystem {
             spawns_mobs,
             mut spawn_builder,
             mut rng,
-            mut stats,
+            mut level_stats,
             player,
             visible_to_player,
         ) = data;
@@ -74,7 +74,7 @@ impl<'a> System<'a> for TriggerSystem {
                 }
                 if let Some(trigger) = entry_trigger.get(*triggered_entity) {
                     if triggering_entity == *player {
-                        stats.traps_triggered += 1;
+                        level_stats.traps_triggered += 1;
                     }
                     let log_suffix;
                     if visible_to_player.get(*triggered_entity).is_some() {

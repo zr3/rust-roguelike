@@ -178,6 +178,7 @@ pub fn meat(ecs: &mut World) -> Entity {
         })
         .with(Item {})
         .with(ProvidesHealing { heal_amount: -2 })
+        .with(ProvidesFood {})
         .with(Consumable {})
         .with(CakeIngredient {
             adjective: "SAVORY".to_string(),

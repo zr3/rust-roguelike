@@ -7,7 +7,7 @@ use crate::{
     },
     map::Map,
     particle_system::ParticleBuilder,
-    stats::OverallStats,
+    stats::{LevelStats, OverallStats},
     RunState,
 };
 
@@ -133,7 +133,7 @@ impl<'a> System<'a> for UseItemSystem {
         ReadStorage<'a, TeleportsPlayer>,
         WriteStorage<'a, Backpack>,
         ReadStorage<'a, GoodThyme>,
-        WriteExpect<'a, OverallStats>,
+        WriteExpect<'a, LevelStats>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -163,7 +163,7 @@ impl<'a> System<'a> for UseItemSystem {
             teleports_player,
             mut backpacks,
             good_thyme,
-            mut game_stats,
+            mut level_stats,
         ) = data;
 
         for (entity, used_item, stats) in (&entities, &wants_use, &mut combat_stats).join() {
@@ -381,6 +381,7 @@ impl<'a> System<'a> for UseItemSystem {
                                 "YOU feel satisfied and full after eating the {}",
                                 names.get(used_item.item).unwrap().name
                             ));
+                            level_stats.food_eaten += 1;
                         }
                     }
                     item_was_used = true;
@@ -442,7 +443,7 @@ impl<'a> System<'a> for UseItemSystem {
 
             // thyme
             if let Some(_) = good_thyme.get(used_item.item) {
-                game_stats.thyme_eaten += 1;
+                level_stats.thyme_eaten += 1;
             }
 
             // consume if needed

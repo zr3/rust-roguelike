@@ -11,6 +11,7 @@ use crate::{
     spawn_system::{SpawnBuilder, SpawnRequest},
     spawners,
     stats::{LevelStats, OverallStats},
+    stats_system::StatsSystem,
     window_fx, RunState, State, UIConfig,
 };
 use rltk::Rltk;
@@ -53,6 +54,7 @@ impl State {
             }
             RunState::CorePostRound => {
                 self.run_systems();
+                StatsSystem {}.run_now(&self.ecs);
                 let mut requests = Vec::new();
                 {
                     let sb = self.ecs.fetch::<SpawnBuilder>();

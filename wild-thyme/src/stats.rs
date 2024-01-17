@@ -27,7 +27,6 @@ pub struct LevelStats {
     pub min_hp: i32,
     pub current_hp: i32,
     pub critters_killed: i32,
-    pub animals_killed: i32,
     pub monsters_killed: i32,
     pub traps_triggered: i32,
     pub steps_taken: i32,
@@ -36,9 +35,6 @@ pub struct LevelStats {
     pub hunger_steps: i32,
     pub starving_steps: i32,
     pub well_fed_steps: i32,
-    pub ghosts_seen: i32,
-    pub dinos_killed: i32,
-    pub special_events: u32,
 }
 
 impl LevelStats {
@@ -50,7 +46,6 @@ impl LevelStats {
             min_hp: current_hp,
             current_hp,
             critters_killed: 0,
-            animals_killed: 0,
             monsters_killed: 0,
             traps_triggered: 0,
             steps_taken: 0,
@@ -59,9 +54,6 @@ impl LevelStats {
             hunger_steps: 0,
             starving_steps: 0,
             well_fed_steps: 0,
-            ghosts_seen: 0,
-            dinos_killed: 0,
-            special_events: 0,
         }
     }
     pub fn reset(&mut self, level: i32) {
@@ -69,7 +61,6 @@ impl LevelStats {
         self.thyme_eaten = 0;
         self.min_hp = self.current_hp;
         self.critters_killed = 0;
-        self.animals_killed = 0;
         self.monsters_killed = 0;
         self.traps_triggered = 0;
         self.steps_taken = 0;
@@ -78,9 +69,6 @@ impl LevelStats {
         self.hunger_steps = 0;
         self.starving_steps = 0;
         self.well_fed_steps = 0;
-        self.ghosts_seen = 0;
-        self.dinos_killed = 0;
-        self.special_events = 0;
     }
 }
 

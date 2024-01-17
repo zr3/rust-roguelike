@@ -6,8 +6,8 @@ use crate::{
     get_visible_tooltips,
     map::TileType,
     particle_system::ParticleBuilder,
-    stats::OverallStats,
-    window_fx,
+    stats::{LevelStats, OverallStats},
+    window_fx, IS_DEBUG_MODE_ACTIVE,
 };
 
 use super::{
@@ -79,7 +79,7 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
             entity_moved
                 .insert(entity, EntityMoved {})
                 .expect("should be able to add movement marker");
-            ecs.fetch_mut::<OverallStats>().steps_taken += 1;
+            ecs.write_resource::<LevelStats>().steps_taken += 1;
         }
     }
 }
@@ -147,6 +147,16 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 }
             }
 
+            VirtualKeyCode::Q => {
+                if IS_DEBUG_MODE_ACTIVE {
+                    window_fx::narrate(
+                        &gs.ecs.fetch::<OverallStats>(),
+                        &gs.ecs.fetch::<LevelStats>(),
+                    );
+                }
+                return RunState::CoreAwaitingInput;
+            }
+
             _ => return RunState::CoreAwaitingInput,
         },
     }
@@ -154,40 +164,47 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 }
 
 fn skip_turn(ecs: &mut World) -> RunState {
-    let player_entity = ecs.fetch::<Entity>();
-    let viewshed_components = ecs.read_storage::<Viewshed>();
-    let monsters = ecs.read_storage::<Monster>();
+    {
+        let player_entity = ecs.fetch::<Entity>();
+        let viewshed_components = ecs.read_storage::<Viewshed>();
+        let monsters = ecs.read_storage::<Monster>();
 
-    let worldmap_resource = ecs.fetch::<Map>();
+        let worldmap_resource = ecs.fetch::<Map>();
 
-    let mut can_heal = true;
-    let viewshed = viewshed_components
-        .get(*player_entity)
-        .expect("player should have viewshed");
-    for tile in viewshed.visible_tiles.iter() {
-        let idx = worldmap_resource.xy_idx(tile.x, tile.y);
-        for entity_id in worldmap_resource.tile_content[idx].iter() {
-            let mob = monsters.get(*entity_id);
-            if let Some(_) = mob {
-                can_heal = false;
+        let mut can_heal = true;
+        let viewshed = viewshed_components
+            .get(*player_entity)
+            .expect("player should have viewshed");
+        for tile in viewshed.visible_tiles.iter() {
+            let idx = worldmap_resource.xy_idx(tile.x, tile.y);
+            for entity_id in worldmap_resource.tile_content[idx].iter() {
+                let mob = monsters.get(*entity_id);
+                if let Some(_) = mob {
+                    can_heal = false;
+                }
             }
         }
-    }
-    let hunger_clocks = ecs.read_storage::<HungerClock>();
-    let hc = hunger_clocks.get(*player_entity);
-    if let Some(hc) = hc {
-        match hc.state {
-            HungerState::Hungry | HungerState::Starving => can_heal = false,
-            _ => {}
+        let hunger_clocks = ecs.read_storage::<HungerClock>();
+        let hc = hunger_clocks.get(*player_entity);
+        if let Some(hc) = hc {
+            match hc.state {
+                HungerState::Hungry | HungerState::Starving => can_heal = false,
+                _ => {}
+            }
+        }
+
+        if can_heal {
+            let mut health_components = ecs.write_storage::<CombatStats>();
+            let player_hp = health_components
+                .get_mut(*player_entity)
+                .expect("player should have hp");
+            player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
         }
     }
-
-    if can_heal {
-        let mut health_components = ecs.write_storage::<CombatStats>();
-        let player_hp = health_components
-            .get_mut(*player_entity)
-            .expect("player should have hp");
-        player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
+    {
+        ecs.get_mut::<LevelStats>()
+            .expect("level stats should always exist")
+            .waits_taken += 1;
     }
 
     RunState::CorePlayerTurn

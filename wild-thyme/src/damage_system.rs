@@ -102,7 +102,10 @@ pub fn delete_the_dead(ecs: &mut World) {
                         let mut log = ecs.fetch_mut::<GameLog>();
                         log.log("".to_string());
                         log.log("RIP... YOU had too wild of a thyme :(".to_string());
-                        window_fx::player_died_effect(&ecs.fetch::<OverallStats>());
+                        window_fx::player_died_effect(
+                            &ecs.fetch::<OverallStats>(),
+                            &ecs.fetch::<LevelStats>(),
+                        );
                     }
                 }
             }

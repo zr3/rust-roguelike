@@ -25,6 +25,7 @@ extern "C" {
         traps_triggered: i32,
         portals_taken: i32,
         steps_taken: i32,
+        level_stats: JsValue,
     );
     fn player_won(
         deepest_level: i32,
@@ -79,7 +80,9 @@ pub fn narrate(stats: &OverallStats, level_stats: &LevelStats) {
     }
 }
 
-pub fn player_died_effect(stats: &OverallStats) {
+pub fn player_died_effect(stats: &OverallStats, level_stats: &LevelStats) {
+    let serialized_level_stats =
+        serde_wasm_bindgen::to_value(&level_stats).expect("level stats should all be serializable");
     #[allow(unused_unsafe)]
     unsafe {
         player_died(
@@ -91,6 +94,7 @@ pub fn player_died_effect(stats: &OverallStats) {
             stats.traps_triggered,
             stats.portals_taken,
             stats.steps_taken,
+            serialized_level_stats,
         );
     }
 }
