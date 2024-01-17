@@ -607,21 +607,41 @@ fn print_stat(ctx: &mut Rltk, line: i32, stat: &str, stat_value: i32) {
 
 pub fn game_over(ctx: &mut Rltk, stats: &OverallStats) -> GameOverResult {
     ctx.print_color_centered(
-        15,
+        13,
         RGB::from_hex("#e04040").expect("hardcoded"),
         RGB::named(rltk::BLACK),
         "OH NO YOU DIED!!",
     );
 
-    print_stat(ctx, 17, "deepest level", stats.deepest_level);
-    print_stat(ctx, 18, "THYME eaten", stats.thyme_eaten);
-    print_stat(ctx, 19, "things killed", stats.critters_killed);
-    print_stat(ctx, 20, "portals taken", stats.portals_taken);
-    print_stat(ctx, 21, "traps triggered", stats.traps_triggered);
-    print_stat(ctx, 22, "steps taken", stats.steps_taken);
-
+    ctx.print_color_centered(
+        15,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        format!("YOU: {}", stats.name),
+    );
+    print_stat(ctx, 16, "deepest level", stats.deepest_level);
+    print_stat(ctx, 17, "most items held", stats.most_items_held);
+    print_stat(ctx, 18, "GOOD THYME eaten", stats.thyme_eaten);
+    print_stat(ctx, 19, "min hp", stats.min_hp);
+    print_stat(ctx, 20, "INNOCENT CRITTERS MURDERED", stats.critters_killed);
+    print_stat(ctx, 21, "monsters killed", stats.monsters_killed);
+    print_stat(ctx, 22, "traps triggered", stats.traps_triggered);
+    print_stat(ctx, 23, "portals taken", stats.portals_taken);
+    print_stat(ctx, 24, "steps taken", stats.steps_taken);
+    print_stat(ctx, 25, "waits taken", stats.waits_taken);
+    print_stat(ctx, 26, "food eaten", stats.food_eaten);
     ctx.print_color_centered(
         27,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        format!(
+            "well-fed/hungry/starving steps: {}/{}/{}",
+            stats.well_fed_steps, stats.hunger_steps, stats.starving_steps
+        ),
+    );
+
+    ctx.print_color_centered(
+        31,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
         "[ENTER] to try again",
@@ -639,7 +659,7 @@ pub fn cake_judge(ctx: &mut Rltk, stats: &OverallStats) -> GameOverResult {
         7,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
-        "YOU baked...",
+        format!("{} baked...", stats.name),
     );
     ctx.print_color_centered(
         9,
@@ -657,36 +677,31 @@ pub fn cake_judge(ctx: &mut Rltk, stats: &OverallStats) -> GameOverResult {
     print_stat(ctx, 18, "edible?", stats.cake.edible_points);
 
     print_stat(ctx, 20, "deepest level", stats.deepest_level);
-    print_stat(ctx, 21, "THYME eaten", stats.thyme_eaten);
-    print_stat(ctx, 22, "minimum hp", stats.min_hp);
-    print_stat(
-        ctx,
-        23,
-        "INNOCENT cute creatures killed",
-        stats.critters_killed,
-    );
-    print_stat(ctx, 24, "monsters killed", stats.critters_killed);
-    print_stat(ctx, 25, "portals taken", stats.portals_taken);
+    print_stat(ctx, 21, "most items held", stats.most_items_held);
+    print_stat(ctx, 22, "GOOD THYME eaten", stats.thyme_eaten);
+    print_stat(ctx, 23, "min hp", stats.min_hp);
+    print_stat(ctx, 24, "INNOCENT CRITTERS MURDERED", stats.critters_killed);
+    print_stat(ctx, 25, "monsters killed", stats.monsters_killed);
     print_stat(ctx, 26, "traps triggered", stats.traps_triggered);
-    print_stat(ctx, 27, "steps taken", stats.steps_taken);
+    print_stat(ctx, 27, "portals taken", stats.portals_taken);
+    print_stat(ctx, 28, "steps taken", stats.steps_taken);
+    print_stat(ctx, 29, "waits taken", stats.waits_taken);
+    print_stat(ctx, 30, "food eaten", stats.food_eaten);
+    ctx.print_color_centered(
+        31,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        format!(
+            "well-fed/hungry/starving steps: {}/{}/{}",
+            stats.well_fed_steps, stats.hunger_steps, stats.starving_steps
+        ),
+    );
 
     ctx.print_color_centered(
         36,
         RGB::from_hex("#70e0a0").expect("hardcoded"),
         RGB::named(rltk::BLACK),
         "YUMMMM THANKS FOR PLAYING!",
-    );
-    ctx.print_color_centered(
-        32,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
-        "baking can be quite the adventure,",
-    );
-    ctx.print_color_centered(
-        33,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
-        "and we had a wild thyme.",
     );
 
     ctx.draw_box(

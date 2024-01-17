@@ -15,6 +15,11 @@ pub struct OverallStats {
     pub traps_triggered: i32,
     pub portals_taken: i32,
     pub steps_taken: i32,
+    pub waits_taken: i32,
+    pub food_eaten: i32,
+    pub hunger_steps: i32,
+    pub starving_steps: i32,
+    pub well_fed_steps: i32,
     pub cake: CakeStats,
 }
 
@@ -97,6 +102,11 @@ impl OverallStats {
             traps_triggered: 0,
             portals_taken: 0,
             steps_taken: 0,
+            waits_taken: 0,
+            food_eaten: 0,
+            hunger_steps: 0,
+            starving_steps: 0,
+            well_fed_steps: 0,
             cake: CakeStats {
                 description: "".to_string(),
                 overall_points: 0,
@@ -120,5 +130,10 @@ impl OverallStats {
         self.traps_triggered += level_stats.traps_triggered;
         self.portals_taken += 1;
         self.steps_taken += level_stats.steps_taken;
+        self.waits_taken += level_stats.waits_taken;
+        self.food_eaten += level_stats.food_eaten;
+        self.hunger_steps += level_stats.hunger_steps;
+        self.starving_steps += level_stats.starving_steps;
+        self.well_fed_steps += level_stats.well_fed_steps;
     }
 }
