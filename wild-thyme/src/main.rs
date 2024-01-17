@@ -1,4 +1,4 @@
-pub const IS_DEBUG_MODE_ACTIVE: bool = true;
+pub const IS_DEBUG_MODE_ACTIVE: bool = false;
 
 use std::collections::HashMap;
 
