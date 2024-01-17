@@ -233,7 +233,7 @@ function startGame() {
     wasm_bindgen("./wasm/and_we_had_a_wild_thyme_bg.wasm");
 }
 async function tutorialText() {
-    await spellOutText("Wow, ok. Hopefully I can remember that! Anyway, you are the @, and time only moves when you move. ENTER to see what the symbols on-screen are. SPACE to interact with things, and more controls below. DYING IS NORMAL! This world is about exploration and experimentation, and there are plenty of items to find, so don't be afraid to use them!");
+    await spellOutText("Well, hopefully I can remember that! Anyway, you are the @, and time only moves when you move. ENTER to see what the symbols on-screen are. SPACE to interact with things, and more controls below. DYING IS NORMAL! This world is about exploration and experimentation, and there are plenty of items to find, so don't be afraid to use them!");
     document.getElementById("bottom-text")?.classList.remove('hidden');
 }
 if (window.location.search.includes('debug')) {
