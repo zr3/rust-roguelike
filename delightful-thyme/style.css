@@ -1,17 +1,25 @@
 :root {
     --color-dark: #181818;
+    --current-level: 1;
 }
 html {
     background-color: var(--color-dark);
 }
 body {
     background-color: var(--color-dark);
+    background-image: url('img/bg.avif');
+    background-size: 110vw;
+    background-position: center;
     margin: 0;
     overflow: hidden;
-    transition: background-color 3s linear;
+    transition: all 3s ease-in-out;
 }
-body.dim {
-    background-color: #000000;
+
+body {
+    background-size: calc(110vw + var(--current-level) * 10);
+}
+#game-window {
+    backdrop-filter: brightness(calc(1 - var(--current-level) * 0.1));
 }
 #input-window {
     filter: opacity(1);
@@ -90,9 +98,30 @@ body.dim {
 #top-text {
     font-family: 'PC Senior', monospace;
     top: 24px;
+    right: 20px;
     min-width: 29ch;
+    max-width: 400px;
     font-size: 1.1vw;
+    --text-bubble-bg: rgba(0, 40, 70, 0.8);
+    background: var(--text-bubble-bg);
+    padding-left: 10px;
 }
+#top-text:after {
+    content: ".";
+    font-weight: bold;
+    font-size: 55px;
+    width: 25px;
+    height: 12px;
+    line-height: 10px;
+    background-color: var(--text-bubble-bg);
+    position: absolute;
+    display: block;
+    bottom: -10px;
+    right: 30px;
+    text-align: right;
+    color: var(--text-bubble-bg);
+}
+
 #bottom-text {
     font-family: 'PC Senior', monospace;
     font-size: 10px;

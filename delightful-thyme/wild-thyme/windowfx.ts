@@ -24,7 +24,6 @@ globalThis.windowfx = {
       document.getElementById("game-window")?.classList.remove("warpoffset");
     }, 1600);
     canvas?.classList.add("portal");
-    document.querySelector("body")?.classList.add("dim");
   },
   nudge: function nudge() {
     document.getElementById("game-window")?.classList.add("nudge");
@@ -55,13 +54,14 @@ globalThis.windowfx = {
       level_stats,
     };
     console.log(stats);
-    if (stats.deepest_level % 10 > 0) {
+    if (stats.level_stats.level % 10 < 9) {
       // normal level
       fetchNarration(stats, "level");
     } else {
       // druid garden
       fetchNarration(stats, "garden");
     }
+    document.querySelector(':root').style.setProperty('--current-level', stats.level_stats.level + 1);
   },
   player_died: function player_died(
     deepest_level: number,
