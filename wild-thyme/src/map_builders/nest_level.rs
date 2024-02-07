@@ -127,7 +127,7 @@ impl NestLevelBuilder {
             }
         }
 
-        let stairs_room = self.map.rooms[0];
+        let stairs_room = self.map.rooms[2];
         let stairs_position = stairs_room.center();
         let stairs_idx = self.map.xy_idx(stairs_position.0, stairs_position.1);
         self.map.tiles[stairs_idx] = TileType::DownStairs;

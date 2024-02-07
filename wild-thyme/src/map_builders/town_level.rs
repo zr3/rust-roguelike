@@ -54,7 +54,7 @@ impl MapBuilder for TownLevelBuilder {
             release_drunk(&mut self.map, (25, 25), 16, &mut rng, 10, TileType::Water);
         }
 
-        self.cake_room = Rect::new(30, 30, 15, 10);
+        self.cake_room = Rect::new(30, 28, 15, 12);
         apply_room_to_map(&mut self.map, &self.cake_room);
         apply_tile_to_map(&mut self.map, &Rect::new(35, 37, 5, 2), TileType::JudgeCake);
         apply_tile_to_map(
@@ -68,6 +68,9 @@ impl MapBuilder for TownLevelBuilder {
         apply_room_to_map(&mut self.map, &self.portal_room);
         apply_horizontal_tunnel(&mut self.map, 45, 52, 20);
         apply_horizontal_tunnel(&mut self.map, 45, 52, 21);
+        apply_horizontal_tunnel(&mut self.map, 45, 52, 22);
+        apply_horizontal_tunnel(&mut self.map, 45, 52, 24);
+        apply_horizontal_tunnel(&mut self.map, 45, 52, 25);
         self.map.rooms.push(self.portal_room);
         let start_center = self.portal_room.center();
         let start_center_idx = self.map.xy_idx(start_center.0, start_center.1);
