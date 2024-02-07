@@ -162,11 +162,11 @@ impl<'a> System<'a> for TriggerSystem {
                                 spawn_points.remove(idx);
                             }
                         }
+                    }
 
-                        // single activation
-                        if let Some(_sa) = single_activation.get(*triggered_entity) {
-                            remove_entities.push(*triggered_entity);
-                        }
+                    // single activation
+                    if let Some(_sa) = single_activation.get(*triggered_entity) {
+                        remove_entities.push(*triggered_entity);
                     }
                 }
             }
