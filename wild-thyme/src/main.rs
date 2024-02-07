@@ -2,6 +2,7 @@ pub const IS_DEBUG_MODE_ACTIVE: bool = false;
 
 use std::collections::HashMap;
 
+use gamelog::LogEntry;
 use hunger_system::HungerSystem;
 use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
@@ -271,7 +272,10 @@ impl State {
 
         let player_entity = self.ecs.fetch::<Entity>();
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
-        gamelog.log("YOU pass through the forest portal and rest for a few minutes...".to_string());
+        gamelog.log(LogEntry::Notification {
+            notification: "YOU pass through the forest portal and rest for a few minutes..."
+                .to_string(),
+        });
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
@@ -303,9 +307,10 @@ impl State {
         self.ecs.insert(Point::new(0, 0));
         self.ecs.insert(RunState::CoreLevelStart);
         self.ecs.insert(particle_system::ParticleBuilder::new());
-        self.ecs.insert(gamelog::GameLog::new(vec![
-            "you find yourself in a dark af forest...".to_string(),
-        ]));
+        self.ecs
+            .insert(gamelog::GameLog::new(vec![LogEntry::Notification {
+                notification: "you find yourself in a dark af forest...".to_string(),
+            }]));
         self.ecs.insert(UIConfig {
             highlight_discoveries: true,
         });

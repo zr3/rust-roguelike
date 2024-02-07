@@ -8,7 +8,7 @@ use crate::{
         Confusion, EntityMoved, EntryTrigger, Hidden, InflictsDamage, Name, Position,
         SingleActivation, SpawnsMobs, SufferDamage, VisibleToPlayer,
     },
-    gamelog::GameLog,
+    gamelog::{GameLog, LogEntry},
     map::Map,
     particle_system::ParticleBuilder,
     spawn_system::SpawnBuilder,
@@ -80,10 +80,15 @@ impl<'a> System<'a> for TriggerSystem {
                     if visible_to_player.get(*triggered_entity).is_some() {
                         log_suffix = "!";
                     } else {
-                        log_suffix = " somewhere, beyond the trees..."
+                        log_suffix = "somewhere, beyond the trees..."
                     }
                     if let Some(name) = names.get(*triggered_entity) {
-                        log.log(format!("{} {}{}", &name.name, &trigger.verb, log_suffix));
+                        log.log(LogEntry::Action {
+                            subject: format!("{}", &name.name),
+                            verb: format!("{}", &trigger.verb),
+                            object: format!(""),
+                            suffix: format!("{}", log_suffix),
+                        });
                     }
 
                     hidden.remove(*triggered_entity);

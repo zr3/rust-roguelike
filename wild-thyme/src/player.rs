@@ -3,6 +3,7 @@ use crate::{
     components::{
         CakeIngredient, Confusion, EntityMoved, GoodThyme, HungerClock, HungerState, Monster,
     },
+    gamelog::LogEntry,
     get_visible_tooltips,
     map::TileType,
     particle_system::ParticleBuilder,
@@ -48,7 +49,9 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
             );
 
             let mut gamelog = ecs.fetch_mut::<GameLog>();
-            gamelog.log("YOU are CONFUSED and cannot move!".to_string());
+            gamelog.log(LogEntry::Alert {
+                alert: "YOU are CONFUSED and cannot move!".to_string(),
+            });
             continue;
         }
 
@@ -127,15 +130,27 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                         };
                     } else if try_place_ingredient(&mut gs.ecs) {
                         let log = &mut gs.ecs.fetch_mut::<GameLog>();
-                        log.log("[d]rop an item here to use it in your cake!".to_string());
+                        log.log(LogEntry::Notification {
+                            notification: "[d]rop an item here to use it in your cake!".to_string(),
+                        });
                     } else if try_judge_cake(&mut gs.ecs) {
                         calculate_cake(&mut gs.ecs);
                         let log = &mut gs.ecs.fetch_mut::<GameLog>();
-                        log.log(format!(""));
-                        log.log(format!(""));
-                        log.log(format!(""));
-                        log.log(format!(""));
-                        log.log("you did it! the cake is baking..".to_string());
+                        log.log(LogEntry::Notification {
+                            notification: "...".to_string(),
+                        });
+                        log.log(LogEntry::Notification {
+                            notification: "...".to_string(),
+                        });
+                        log.log(LogEntry::Notification {
+                            notification: "...".to_string(),
+                        });
+                        log.log(LogEntry::Notification {
+                            notification: "...".to_string(),
+                        });
+                        log.log(LogEntry::Alert {
+                            alert: "you did it! the cake is baking..".to_string(),
+                        });
                         window_fx::player_won_effect(&gs.ecs.fetch::<OverallStats>());
                         return RunState::OuterCakeReveal {
                             row: 0,
@@ -238,12 +253,12 @@ fn try_judge_cake(ecs: &mut World) -> bool {
         .join()
         .any(|(_, pos)| map.tiles[map.xy_idx(pos.x, pos.y)] == TileType::IngredientTable)
     {
-        log.log(format!(
-            "[d]rop your CAKE INGREDIENTS on the pedestals above.."
-        ));
-        log.log(format!(
-            "some GOOD THYME is needed for a cake before it can be judged!"
-        ));
+        log.log(LogEntry::Notification {
+            notification: format!("[d]rop your CAKE INGREDIENTS on the pedestals above.."),
+        });
+        log.log(LogEntry::Notification {
+            notification: format!("some GOOD THYME is needed for a cake before it can be judged!"),
+        });
         return false;
     }
     let ingredients = ecs.read_storage::<CakeIngredient>();
@@ -255,10 +270,12 @@ fn try_judge_cake(ecs: &mut World) -> bool {
         }
     });
     if num_ingredients < 3 {
-        log.log(format!(
-            "[d]rop your CAKE INGREDIENTS on the pedestals above.."
-        ));
-        log.log(format!("a good CAKE needs at least 3 INGREDIENTS!"));
+        log.log(LogEntry::Notification {
+            notification: format!("[d]rop your CAKE INGREDIENTS on the pedestals above.."),
+        });
+        log.log(LogEntry::Notification {
+            notification: format!("a good CAKE needs at least 3 INGREDIENTS!"),
+        });
         return false;
     }
     return true;

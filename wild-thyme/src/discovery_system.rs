@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
     components::{HighlightObject, Name, Position, Rare, SeenByPlayer, VisibleToPlayer},
-    gamelog::GameLog,
+    gamelog::{GameLog, LogEntry},
     particle_system::ParticleBuilder,
     RunState, UIConfig,
 };
@@ -67,7 +67,9 @@ impl<'a> System<'a> for DiscoverySystem {
             let _ = positions.insert(highlight_entity, position.clone());
             let _ = highlights.insert(highlight_entity, HighlightObject {});
             // log to record the new sighting
-            log.log(format!("YOU saw {} for the first time.", name.name));
+            log.log(LogEntry::Notification {
+                notification: format!("YOU saw {} for the first time.", name.name),
+            });
         }
         // set runstate to view stack of new things and log
         if ui_config.highlight_discoveries && !new_sights.is_empty() {

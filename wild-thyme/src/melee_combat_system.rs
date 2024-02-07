@@ -1,5 +1,6 @@
 use crate::{
     components::{DefenseBonus, Equipped, HungerClock, HungerState, MeleePowerBonus, Position},
+    gamelog::LogEntry,
     particle_system::ParticleBuilder,
 };
 
@@ -93,15 +94,19 @@ impl<'a> System<'a> for MeleeCombatSystem {
                         (stats.power + offensive_bonus) - (target_stats.defense + defensive_bonus),
                     );
                     if damage == 0 {
-                        log.log(format!(
-                            "{} is not able to hurt {}",
-                            &name.name, &target_name.name
-                        ));
+                        log.log(LogEntry::Action {
+                            subject: format!("{}", &name.name),
+                            verb: format!("is not able to hurt"),
+                            object: format!("{}", &target_name.name),
+                            suffix: format!("."),
+                        });
                     } else {
-                        log.log(format!(
-                            "{} hit {} for {} HP!",
-                            &name.name, &target_name.name, damage
-                        ));
+                        log.log(LogEntry::Action {
+                            subject: format!("{}", &name.name),
+                            verb: format!("hit"),
+                            object: format!("{}", &target_name.name),
+                            suffix: format!("for {} HP!", damage),
+                        });
                         SufferDamage::new_damage(&mut inflict_damage, wants_melee.target, damage);
                     }
                 }

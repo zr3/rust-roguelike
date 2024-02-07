@@ -2,7 +2,7 @@ use specs::prelude::*;
 
 use crate::{
     components::{HungerClock, HungerState, Position, SufferDamage},
-    gamelog::GameLog,
+    gamelog::{GameLog, LogEntry},
     particle_system::ParticleBuilder,
     window_fx, RunState,
 };
@@ -58,20 +58,26 @@ impl<'a> System<'a> for HungerSystem {
                             clock.state = HungerState::Normal;
                             clock.duration = 200;
                             if entity == *player_entity {
-                                log.log("YOU are no longer well fed.".to_string());
+                                log.log(LogEntry::Notification {
+                                    notification: "YOU are no longer well fed.".to_string(),
+                                });
                             }
                         }
                         HungerState::Normal => {
                             clock.state = HungerState::Hungry;
                             clock.duration = 200;
                             if entity == *player_entity {
-                                log.log("YOU are hungry.".to_string());
+                                log.log(LogEntry::Notification {
+                                    notification: "YOU are hungry.".to_string(),
+                                });
                             }
                         }
                         HungerState::Hungry => {
                             clock.state = HungerState::Starving;
                             if entity == *player_entity {
-                                log.log("YOU are STARVING! :(".to_string());
+                                log.log(LogEntry::Alert {
+                                    alert: "YOU are STARVING!".to_string(),
+                                });
                                 let pos = positions
                                     .get(*player_entity)
                                     .expect("player should always have pos");
@@ -88,7 +94,9 @@ impl<'a> System<'a> for HungerSystem {
                         }
                         HungerState::Starving => {
                             if entity == *player_entity {
-                                log.log("YOU feel pain from the hunger :(".to_string());
+                                log.log(LogEntry::Alert {
+                                    alert: "YOU feel pain from the hunger D:".to_string(),
+                                });
                                 let pos = positions
                                     .get(*player_entity)
                                     .expect("player should always have pos");

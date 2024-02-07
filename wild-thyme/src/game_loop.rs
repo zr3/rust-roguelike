@@ -3,7 +3,9 @@ use crate::{
         HighlightObject, Ranged, TeleportsPlayer, WantsToDropItem, WantsToRemoveItem,
         WantsToUseItem,
     },
-    discovery_system, gui,
+    discovery_system,
+    gamelog::GameLog,
+    gui,
     map::{Map, MAPHEIGHT, MAPWIDTH},
     menu,
     player::*,
@@ -23,7 +25,7 @@ impl State {
             // core game loop
             RunState::CoreLevelStart => {
                 self.run_systems();
-                return RunState::CoreAwaitingInput;
+                return RunState::CorePreRound;
             }
 
             RunState::CorePreRound => {
@@ -38,6 +40,7 @@ impl State {
                 return player_input(self, ctx);
             }
             RunState::CorePlayerTurn => {
+                self.ecs.fetch_mut::<GameLog>().mark_all_read();
                 self.run_systems();
 
                 return match *self.ecs.fetch::<RunState>() {

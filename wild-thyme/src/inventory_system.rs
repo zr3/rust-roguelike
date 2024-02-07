@@ -5,6 +5,7 @@ use crate::{
         ProvidesHealing, SufferDamage, TeleportsPlayer, WantsToDropItem, WantsToRemoveItem,
         WantsToUseItem,
     },
+    gamelog::LogEntry,
     map::Map,
     particle_system::ParticleBuilder,
     stats::{LevelStats, OverallStats},
@@ -65,13 +66,15 @@ impl<'a> System<'a> for ItemCollectionSystem {
 
             if pickup.collected_by == *player_entity {
                 if backpack_too_full {
-                    gamelog.log(format!(
-                        "YOUR backpack is full! YOU can't pick up the {}.",
-                        names
-                            .get(pickup.item)
-                            .expect("items should always have Name")
-                            .name
-                    ));
+                    gamelog.log(LogEntry::Alert {
+                        alert: format!(
+                            "YOUR backpack is full! YOU can't pick up the {}.",
+                            names
+                                .get(pickup.item)
+                                .expect("items should always have Name")
+                                .name
+                        ),
+                    });
                     let pos = positions
                         .get(*player_entity)
                         .expect("player should always have pos");
@@ -84,13 +87,18 @@ impl<'a> System<'a> for ItemCollectionSystem {
                         150.0,
                     );
                 } else {
-                    gamelog.log(format!(
-                        "YOU pick up the {}.",
-                        names
-                            .get(pickup.item)
-                            .expect("items should always have Name")
-                            .name
-                    ));
+                    gamelog.log(LogEntry::Action {
+                        subject: format!("YOU"),
+                        verb: format!("pick up the"),
+                        object: format!(
+                            "{}",
+                            names
+                                .get(pickup.item)
+                                .expect("items should always have Name")
+                                .name
+                        ),
+                        suffix: format!("."),
+                    });
                     if let Some(backpack) = backpacks.get(*player_entity) {
                         if backpack.items > stats.most_items_held {
                             stats.most_items_held = backpack.items;
@@ -222,7 +230,12 @@ impl<'a> System<'a> for UseItemSystem {
                     if already_equipped.owner == target && already_equipped.slot == target_slot {
                         to_unequip.push(item_entity);
                         if target == *player_entity {
-                            gamelog.log(format!("YOU unequip {}.", name.name));
+                            gamelog.log(LogEntry::Action {
+                                subject: format!("YOU"),
+                                verb: format!("unequip"),
+                                object: format!("{}", name.name),
+                                suffix: format!("."),
+                            });
                         }
                     }
                 }
@@ -251,13 +264,18 @@ impl<'a> System<'a> for UseItemSystem {
                 }
                 backpack_items.remove(used_item.item);
                 if target == *player_entity {
-                    gamelog.log(format!(
-                        "YOU equip {}.",
-                        names
-                            .get(used_item.item)
-                            .expect("items should have names")
-                            .name
-                    ));
+                    gamelog.log(LogEntry::Action {
+                        subject: format!("YOU"),
+                        verb: format!("equip"),
+                        object: format!(
+                            "{}",
+                            names
+                                .get(used_item.item)
+                                .expect("items should have names")
+                                .name
+                        ),
+                        suffix: format!("."),
+                    });
                 }
             }
 
@@ -268,11 +286,13 @@ impl<'a> System<'a> for UseItemSystem {
                 Some(healer) => {
                     stats.hp = i32::min(stats.max_hp, stats.hp + healer.heal_amount);
                     if entity == *player_entity {
-                        gamelog.log(format!(
-                            "The {} healed {} hp!",
-                            names.get(used_item.item).unwrap().name,
-                            healer.heal_amount
-                        ));
+                        gamelog.log(LogEntry::Alert {
+                            alert: format!(
+                                "The {} healed {} hp!",
+                                names.get(used_item.item).unwrap().name,
+                                healer.heal_amount
+                            ),
+                        });
                     }
                     item_was_used = true;
 
@@ -302,10 +322,12 @@ impl<'a> System<'a> for UseItemSystem {
                             let mob_name = names.get(*mob).expect("targets should have name");
                             let item_name =
                                 names.get(used_item.item).expect("items should have name");
-                            gamelog.log(format!(
-                                "YOU used {} on {}. {} damage!",
-                                item_name.name, mob_name.name, damage.damage
-                            ));
+                            gamelog.log(LogEntry::Action {
+                                subject: format!("YOU"),
+                                verb: format!("used {} on", item_name.name),
+                                object: format!("{}", mob_name.name),
+                                suffix: format!(", {} damage!", damage.damage),
+                            });
                         }
 
                         item_was_used = true;
@@ -339,10 +361,12 @@ impl<'a> System<'a> for UseItemSystem {
                                 let mob_name = names.get(*mob).expect("targets should have a name");
                                 let item_name =
                                     names.get(used_item.item).expect("items should have a name");
-                                gamelog.log(format!(
-                                    "YOU used {} on {}, and it is CONFUSED!",
-                                    item_name.name, mob_name.name
-                                ));
+                                gamelog.log(LogEntry::Action {
+                                    subject: format!("YOU"),
+                                    verb: format!("used {} on", item_name.name),
+                                    object: format!("{}", mob_name.name),
+                                    suffix: format!(", and it is CONFUSED!"),
+                                });
                             }
 
                             let pos = positions.get(*mob);
@@ -377,10 +401,12 @@ impl<'a> System<'a> for UseItemSystem {
                         hc.state = HungerState::Full;
                         hc.duration = 20;
                         if entity == *player_entity {
-                            gamelog.log(format!(
-                                "YOU feel satisfied and full after eating the {}",
-                                names.get(used_item.item).unwrap().name
-                            ));
+                            gamelog.log(LogEntry::Notification {
+                                notification: format!(
+                                    "YOU feel satisfied and full after eating the {}",
+                                    names.get(used_item.item).unwrap().name
+                                ),
+                            });
                             level_stats.food_eaten += 1;
                         }
                     }
@@ -403,7 +429,9 @@ impl<'a> System<'a> for UseItemSystem {
             // magic mapping items
             let item_maps = magic_mapper.get(used_item.item);
             if let Some(_item_maps) = item_maps {
-                gamelog.log(format!("YOU can now SEE this level!"));
+                gamelog.log(LogEntry::Alert {
+                    alert: format!("YOU can now SEE this level!"),
+                });
                 item_was_used = true;
                 *runstate = RunState::ActionMagicMapReveal {
                     row: 0,
@@ -425,7 +453,9 @@ impl<'a> System<'a> for UseItemSystem {
 
             // teleporting items
             if let Some(_) = teleports_player.get(used_item.item) {
-                gamelog.log(format!("YOU are carried to another level!"));
+                gamelog.log(LogEntry::Alert {
+                    alert: format!("YOU are carried to another level!"),
+                });
                 item_was_used = true;
 
                 let pos = positions.get(entity);
@@ -514,10 +544,12 @@ impl<'a> System<'a> for ItemDropSystem {
             backpack_items.remove(to_drop.item);
 
             if entity == *player_entity {
-                gamelog.log(format!(
-                    "YOU dropped the {}..",
-                    names.get(to_drop.item).unwrap().name
-                ));
+                gamelog.log(LogEntry::Action {
+                    subject: format!("YOU"),
+                    object: format!("{}", names.get(to_drop.item).unwrap().name),
+                    verb: format!("dropped the"),
+                    suffix: format!(".."),
+                });
             }
         }
         wants_drop.clear();
@@ -567,12 +599,16 @@ impl<'a> System<'a> for ItemRemoveSystem {
             }
             if entity == *player_entity {
                 if backpack_too_full {
-                    gamelog.log(format!("YOU unequipped the {}", name.name));
+                    gamelog.log(LogEntry::Action {
+                        subject: format!("YOU"),
+                        object: format!("{}", name.name),
+                        verb: format!("unequipped the"),
+                        suffix: format!("."),
+                    });
                 } else {
-                    gamelog.log(format!(
-                        "YOUR backpack is full! can't unequip the {}",
-                        name.name
-                    ));
+                    gamelog.log(LogEntry::Alert {
+                        alert: format!("YOUR backpack is full! can't unequip the {}", name.name),
+                    });
                 }
             }
         }

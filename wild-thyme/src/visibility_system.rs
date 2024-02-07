@@ -1,6 +1,6 @@
 use crate::{
     components::{Hidden, Name, VisibleToPlayer},
-    gamelog::GameLog,
+    gamelog::{GameLog, LogEntry},
 };
 
 use super::{Map, Player, Position, Viewshed};
@@ -62,7 +62,9 @@ impl<'a> System<'a> for VisibilitySystem {
                             if let Some(_hidden) = hidden.get(*e) {
                                 if rng.roll_dice(1, 24) == 1 {
                                     if let Some(name) = names.get(*e) {
-                                        log.log(format!("YOU spotted a {}!", &name.name));
+                                        log.log(LogEntry::Alert {
+                                            alert: format!("YOU spotted a {}!", &name.name),
+                                        });
                                         let _ = visible_to_player.insert(*e, VisibleToPlayer {});
                                     }
                                     hidden.remove(*e);

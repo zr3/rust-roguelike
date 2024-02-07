@@ -1,5 +1,6 @@
 use crate::{
     components::{DropsLoot, Herbivore, Name, Position, WantsToDropItem},
+    gamelog::LogEntry,
     map::Map,
     stats::{LevelStats, OverallStats},
     window_fx,
@@ -81,7 +82,9 @@ pub fn delete_the_dead(ecs: &mut World) {
                         let victim_name = names.get(entity);
                         let mut log = ecs.fetch_mut::<GameLog>();
                         if let Some(victim_name) = victim_name {
-                            log.log(format!("{} is dead", &victim_name.name));
+                            log.log(LogEntry::Alert {
+                                alert: format!("{} is dead", &victim_name.name),
+                            });
                         }
 
                         dead.push(entity);
@@ -100,8 +103,12 @@ pub fn delete_the_dead(ecs: &mut World) {
                         pr.fg = RGB::named(rltk::WHITE);
                         pr.bg = RGB::named(rltk::BLACK);
                         let mut log = ecs.fetch_mut::<GameLog>();
-                        log.log("".to_string());
-                        log.log("RIP... YOU had too wild of a thyme :(".to_string());
+                        log.log(LogEntry::Notification {
+                            notification: "".to_string(),
+                        });
+                        log.log(LogEntry::Alert {
+                            alert: "RIP :(".to_string(),
+                        });
                         window_fx::player_died_effect(
                             &ecs.fetch::<OverallStats>(),
                             &ecs.fetch::<LevelStats>(),

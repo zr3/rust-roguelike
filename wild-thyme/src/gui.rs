@@ -7,6 +7,7 @@ use crate::{
         Backpack, CombatStats, Equipped, Hidden, HighlightObject, HungerClock, HungerState,
         InBackpack, Viewshed,
     },
+    gamelog::LogEntry,
     get_visible_tooltips,
     stats::OverallStats,
     RunState, State,
@@ -101,7 +102,36 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let mut y = 44;
     for s in log.entries().rev() {
         if y < 49 {
-            ctx.print(2, y, s);
+            let line = match s.entry {
+                LogEntry::Quip { subject, quip } => format!("{}: {}", subject, quip),
+                LogEntry::Action {
+                    subject,
+                    object,
+                    verb,
+                    suffix,
+                } => format!("{} {} {} {}", subject, verb, object, suffix),
+                LogEntry::Notification { notification } => format!("{}", notification),
+                LogEntry::Alert { alert } => format!("{}", alert),
+            };
+            let color = match s.entry {
+                LogEntry::Quip { .. } => match s.read {
+                    true => RGB::from_hex("#403030").expect("hardcoded"),
+                    false => RGB::from_hex("#806060").expect("hardcoded"),
+                },
+                LogEntry::Action { .. } => match s.read {
+                    true => RGB::from_hex("#303040").expect("hardcoded"),
+                    false => RGB::from_hex("#606080").expect("hardcoded"),
+                },
+                LogEntry::Notification { .. } => match s.read {
+                    true => RGB::from_hex("#303030").expect("hardcoded"),
+                    false => RGB::from_hex("#606060").expect("hardcoded"),
+                },
+                LogEntry::Alert { .. } => match s.read {
+                    true => RGB::from_hex("#803030").expect("hardcoded"),
+                    false => RGB::from_hex("#d07060").expect("hardcoded"),
+                },
+            };
+            ctx.print_color(2, y, color, RGB::named(rltk::BLACK), line);
         }
         y += 1;
     }

@@ -1,6 +1,6 @@
 use crate::{
     components::{Name, Quips},
-    gamelog::GameLog,
+    gamelog::{GameLog, LogEntry},
     particle_system::ParticleBuilder,
     RunState,
 };
@@ -42,7 +42,10 @@ impl<'a> System<'a> for QuipSystem {
             // pick random quip and log!
             quips.countdown = rng.roll_dice(1, quips.max_countdown / 2) + (quips.max_countdown / 2);
             if let Some(quip) = rng.random_slice_entry(&quips.quips) {
-                log.log(format!("{}: {}", name.name, quip));
+                log.log(LogEntry::Quip {
+                    subject: format!("{}", name.name),
+                    quip: format!("{}", quip),
+                });
                 particle_builder.request(
                     pos.x,
                     pos.y,
