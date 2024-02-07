@@ -374,6 +374,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<WantsToSwap>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<Rare>();
     gs.ecs.register::<InBackpack>();

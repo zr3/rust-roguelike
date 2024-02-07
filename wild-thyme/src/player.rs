@@ -2,6 +2,7 @@ use crate::{
     calculate_cake,
     components::{
         CakeIngredient, Confusion, EntityMoved, GoodThyme, HungerClock, HungerState, Monster,
+        WantsToSwap,
     },
     gamelog::LogEntry,
     get_visible_tooltips,
@@ -29,6 +30,8 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
     let mut entity_moved = ecs.write_storage::<EntityMoved>();
     let mut confused = ecs.write_storage::<Confusion>();
     let mut particle_builder = ecs.fetch_mut::<ParticleBuilder>();
+    let mut wants_to_swap = ecs.write_storage::<WantsToSwap>();
+    let mobs = ecs.read_storage::<Monster>();
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
@@ -67,6 +70,11 @@ pub fn try_move_player(dx: i32, dy: i32, ecs: &mut World) {
                             target: *potential_target,
                         },
                     )
+                    .expect("add target failed");
+                return;
+            } else if let Some(_) = mobs.get(*potential_target) {
+                wants_to_swap
+                    .insert(*potential_target, WantsToSwap { target: entity })
                     .expect("add target failed");
                 return;
             }

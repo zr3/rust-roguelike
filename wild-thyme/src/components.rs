@@ -84,6 +84,11 @@ pub struct WantsToMelee {
 }
 
 #[derive(Component, ConvertSaveload, Clone)]
+pub struct WantsToSwap {
+    pub target: Entity,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct SufferDamage {
     pub amount: Vec<i32>,
 }

@@ -1,5 +1,5 @@
 use crate::{
-    components::{Confusion, EntityMoved, HostileToPlayer},
+    components::{Confusion, EntityMoved, HostileToPlayer, WantsToSwap},
     particle_system::ParticleBuilder,
 };
 
@@ -20,6 +20,7 @@ impl<'a> System<'a> for MonsterAI {
         ReadStorage<'a, Monster>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, WantsToMelee>,
+        WriteStorage<'a, WantsToSwap>,
         WriteStorage<'a, Confusion>,
         WriteExpect<'a, ParticleBuilder>,
         WriteStorage<'a, EntityMoved>,
@@ -36,8 +37,9 @@ impl<'a> System<'a> for MonsterAI {
             entities,
             mut viewshed,
             monster,
-            mut position,
+            mut positions,
             mut wants_to_melee,
+            mut wants_to_swap,
             mut confused,
             mut particle_builder,
             mut entity_moved,
@@ -50,7 +52,7 @@ impl<'a> System<'a> for MonsterAI {
         }
 
         for (entity, mut viewshed, _monster, mut pos) in
-            (&entities, &mut viewshed, &monster, &mut position).join()
+            (&entities, &mut viewshed, &monster, &mut positions).join()
         {
             let mut can_act = true;
 
@@ -130,5 +132,28 @@ impl<'a> System<'a> for MonsterAI {
                 }
             }
         }
+        for (swapper_entity, swapper) in (&entities, &wants_to_swap).join() {
+            let (old_swapper_x, old_swapper_y);
+            if let Some(swapper_pos) = positions.get_mut(swapper_entity) {
+                (old_swapper_x, old_swapper_y) = (swapper_pos.x, swapper_pos.y);
+            } else {
+                continue;
+            }
+            let (old_target_x, old_target_y);
+            if let Some(target_pos) = positions.get_mut(swapper.target) {
+                (old_target_x, old_target_y) = (target_pos.x, target_pos.y);
+            } else {
+                continue;
+            }
+            if let Some(target_pos) = positions.get_mut(swapper.target) {
+                target_pos.x = old_swapper_x;
+                target_pos.y = old_swapper_y;
+            }
+            if let Some(swapper_pos) = positions.get_mut(swapper_entity) {
+                swapper_pos.x = old_target_x;
+                swapper_pos.y = old_target_y;
+            }
+        }
+        wants_to_swap.clear();
     }
 }
