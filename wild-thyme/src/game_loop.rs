@@ -1,6 +1,6 @@
 use crate::{
     components::{
-        HighlightObject, Ranged, TeleportsPlayer, WantsToDropItem, WantsToRemoveItem,
+        HighlightObject, Ranged, TeleportsPlayer, Viewshed, WantsToDropItem, WantsToRemoveItem,
         WantsToUseItem,
     },
     discovery_system,
@@ -24,6 +24,15 @@ impl State {
         match current_runstate {
             // core game loop
             RunState::CoreLevelStart => {
+                {
+                    let player_entity = self.ecs.fetch::<Entity>();
+                    let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+                    let vs = viewshed_components.get_mut(*player_entity);
+                    if let Some(vs) = vs {
+                        // start in the dark on all levels except druid levels
+                        vs.dirty = self.ecs.fetch::<LevelStats>().level % 5 == 0;
+                    }
+                }
                 self.run_systems();
                 return RunState::CorePreRound;
             }

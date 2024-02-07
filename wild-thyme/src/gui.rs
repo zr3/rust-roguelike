@@ -5,7 +5,7 @@ use specs::prelude::*;
 use crate::{
     components::{
         Backpack, CombatStats, Equipped, Hidden, HighlightObject, HungerClock, HungerState,
-        InBackpack, Viewshed,
+        InBackpack, Renderable, Viewshed,
     },
     gamelog::LogEntry,
     get_visible_tooltips,
@@ -33,13 +33,77 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         43,
         79,
         6,
-        RGB::from_hex("#c9c9c9").expect("hardcoded"),
+        RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
     );
+    // inventory side box
+    ctx.draw_box(
+        76,
+        0,
+        2,
+        11,
+        RGB::named(rltk::BURLYWOOD),
+        RGB::named(rltk::BLACK),
+    );
+    ctx.print_color(
+        77,
+        0,
+        RGB::named(rltk::BURLYWOOD),
+        RGB::named(rltk::BLACK),
+        "I",
+    );
+    let player_entity = ecs.fetch::<Entity>();
+    let backpack_items = ecs.read_storage::<InBackpack>();
+    let renderables = ecs.read_storage::<Renderable>();
+    let inventory = (&backpack_items, &renderables)
+        .join()
+        .filter(|item| item.0.owner == *player_entity);
+    let mut item_index = 0;
+    for (_inpack, renderable) in inventory {
+        ctx.set(
+            77,
+            1 + item_index,
+            renderable.fg,
+            renderable.bg,
+            renderable.glyph,
+        );
+        item_index += 1;
+    }
+    // equipment side box
+    ctx.draw_box(
+        76,
+        13,
+        2,
+        3,
+        RGB::named(rltk::BURLYWOOD),
+        RGB::named(rltk::BLACK),
+    );
+    ctx.print_color(
+        77,
+        13,
+        RGB::named(rltk::BURLYWOOD),
+        RGB::named(rltk::BLACK),
+        "E",
+    );
+    let equipped_items = ecs.read_storage::<Equipped>();
+    let currently_equipped = (&equipped_items, &renderables)
+        .join()
+        .filter(|item| item.0.owner == *player_entity);
+    item_index = 0;
+    for (_equipped, renderable) in currently_equipped {
+        ctx.set(
+            77,
+            14 + item_index,
+            renderable.fg,
+            renderable.bg,
+            renderable.glyph,
+        );
+        item_index += 1;
+    }
 
     // depth level
     let map = ecs.fetch::<Map>();
-    let depth = format!("depth: {}", map.depth);
+    let depth = format!("trail: {}", map.depth);
     ctx.print_color(
         2,
         43,
@@ -127,8 +191,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                     false => RGB::from_hex("#606060").expect("hardcoded"),
                 },
                 LogEntry::Alert { .. } => match s.read {
-                    true => RGB::from_hex("#803030").expect("hardcoded"),
-                    false => RGB::from_hex("#d07060").expect("hardcoded"),
+                    true => RGB::from_hex("#653030").expect("hardcoded"),
+                    false => RGB::from_hex("#a04040").expect("hardcoded"),
                 },
             };
             ctx.print_color(2, y, color, RGB::named(rltk::BLACK), line);
@@ -286,6 +350,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     let backpack_items = gs.ecs.read_storage::<InBackpack>();
     let backpacks = gs.ecs.read_storage::<Backpack>();
     let entities = gs.ecs.entities();
+    let renderables = gs.ecs.read_storage::<Renderable>();
 
     let inventory = (&backpack_items, &names)
         .join()
@@ -301,7 +366,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         y - 2,
         31,
         (count + 3) as i32,
-        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
     );
     let padding;
@@ -340,7 +405,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
-    for (entity, _pack, name) in (&entities, &backpack_items, &names)
+    for (entity, _pack, name, renderable) in (&entities, &backpack_items, &names, &renderables)
         .join()
         .filter(|item| item.1.owner == *player_entity)
     {
@@ -365,8 +430,15 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             RGB::named(rltk::BLACK),
             rltk::to_cp437(')'),
         );
+        ctx.set(21, y, renderable.fg, renderable.bg, renderable.glyph);
 
-        ctx.print(21, y, &name.name.to_string());
+        ctx.print_color(
+            23,
+            y,
+            RGB::from_hex("#a0a0a0").expect("hardcoded"),
+            RGB::named(rltk::BLACK),
+            &name.name.to_string(),
+        );
         equippable.push(entity);
         y += 1;
         j += 1;
@@ -407,7 +479,7 @@ pub fn show_drop_item(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         y - 2,
         31,
         (count + 3) as i32,
-        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
     );
     ctx.print_color(
@@ -494,7 +566,7 @@ pub fn show_remove_item(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Opti
         y - 2,
         31,
         (count + 3) as i32,
-        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BURLYWOOD),
         RGB::named(rltk::BLACK),
     );
     ctx.print_color(
@@ -643,12 +715,6 @@ pub fn game_over(ctx: &mut Rltk, stats: &OverallStats) -> GameOverResult {
         "OH NO YOU DIED!!",
     );
 
-    ctx.print_color_centered(
-        15,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
-        format!("YOU: {}", stats.name),
-    );
     print_stat(ctx, 16, "deepest level", stats.deepest_level);
     print_stat(ctx, 17, "most items held", stats.most_items_held);
     print_stat(ctx, 18, "GOOD THYME eaten", stats.thyme_eaten);

@@ -58,7 +58,7 @@ at each level, the game uses an LLM to summarize what happened, and also to come
 
 ✔️ m6: cicd, auth, backend
 
-  m7: cleanup, bug fixes and feedback
+✔️ m7: cleanup, bug fixes and feedback
 
   m8: final polish
 

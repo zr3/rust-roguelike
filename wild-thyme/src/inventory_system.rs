@@ -430,7 +430,7 @@ impl<'a> System<'a> for UseItemSystem {
             let item_maps = magic_mapper.get(used_item.item);
             if let Some(_item_maps) = item_maps {
                 gamelog.log(LogEntry::Alert {
-                    alert: format!("YOU can now SEE this level!"),
+                    alert: format!("YOU can now SEE the trail!"),
                 });
                 item_was_used = true;
                 *runstate = RunState::ActionMagicMapReveal {
@@ -598,7 +598,7 @@ impl<'a> System<'a> for ItemRemoveSystem {
                     .expect("should be able to add unequipped item to backpack");
             }
             if entity == *player_entity {
-                if backpack_too_full {
+                if !backpack_too_full {
                     gamelog.log(LogEntry::Action {
                         subject: format!("YOU"),
                         object: format!("{}", name.name),

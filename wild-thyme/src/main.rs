@@ -340,13 +340,6 @@ impl State {
             player_pos_comp.x = player_pos.x;
             player_pos_comp.y = player_pos.y;
         }
-
-        // Mark the player's visibility as dirty
-        let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
-        let vs = viewshed_components.get_mut(*player_entity);
-        if let Some(vs) = vs {
-            vs.dirty = true;
-        }
     }
 }
 

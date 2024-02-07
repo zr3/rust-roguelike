@@ -26,7 +26,7 @@ pub fn make_builder(new_depth: i32) -> Box<dyn MapBuilder> {
         Box::new(TownLevelBuilder::new())
     } else if new_depth % 3 == 0 {
         Box::new(NestLevelBuilder::new(new_depth))
-    } else if new_depth % 10 == 0 {
+    } else if new_depth % 5 == 0 {
         Box::new(WizardLevelBuilder::new(new_depth))
     } else if new_depth == 13 {
         Box::new(SimpleMapBuilder::new(new_depth))

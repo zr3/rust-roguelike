@@ -119,7 +119,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::I => return RunState::MenuInventory,
             VirtualKeyCode::D => return RunState::MenuDropItem,
-            VirtualKeyCode::R => return RunState::MenuRemoveItem,
+            VirtualKeyCode::E => return RunState::MenuRemoveItem,
 
             VirtualKeyCode::Return => {
                 return RunState::ActionShowObjects {
