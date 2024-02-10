@@ -92,7 +92,7 @@ pub struct CakeStats {
 impl OverallStats {
     pub fn new() -> OverallStats {
         OverallStats {
-            name: format!("???"),
+            name: format!("YOU"),
             deepest_level: 0,
             most_items_held: 0,
             thyme_eaten: 0,
