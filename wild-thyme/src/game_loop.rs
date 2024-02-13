@@ -30,7 +30,12 @@ impl State {
                     let vs = viewshed_components.get_mut(*player_entity);
                     if let Some(vs) = vs {
                         // start in the dark on all levels except druid levels
-                        vs.dirty = self.ecs.fetch::<LevelStats>().level % 5 == 0;
+                        if self.ecs.fetch::<LevelStats>().level % 5 != 0 {
+                            vs.range = 2;
+                        } else {
+                            vs.range = 12;
+                        }
+                        vs.dirty = true;
                     }
                 }
                 self.run_systems();
@@ -91,6 +96,18 @@ impl State {
                         .get_mut::<SpawnBuilder>()
                         .expect("SpawnBuilder should be permanently registered");
                     sb.requests.clear();
+                }
+                // expand player view range back to normal after first step
+                {
+                    let player_entity = self.ecs.fetch::<Entity>();
+                    let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+                    let vs = viewshed_components.get_mut(*player_entity);
+                    if let Some(vs) = vs {
+                        if self.ecs.fetch::<LevelStats>().steps_taken > 0 && vs.range < 12 {
+                            vs.range += 1;
+                            vs.dirty = true;
+                        }
+                    }
                 }
                 self.ecs.maintain();
                 return RunState::CorePreRound;

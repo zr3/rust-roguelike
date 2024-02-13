@@ -273,8 +273,10 @@ impl State {
         let player_entity = self.ecs.fetch::<Entity>();
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
         gamelog.log(LogEntry::Notification {
-            notification: "YOU pass through the forest portal and rest for a few minutes..."
-                .to_string(),
+            notification: "you close your eyes and rest for a few minutes.".to_string(),
+        });
+        gamelog.log(LogEntry::Notification {
+            notification: "you yawn and squint your eyes open, seeing a new trail..".to_string(),
         });
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
@@ -309,7 +311,8 @@ impl State {
         self.ecs.insert(particle_system::ParticleBuilder::new());
         self.ecs
             .insert(gamelog::GameLog::new(vec![LogEntry::Notification {
-                notification: "you find yourself in a dark af forest...".to_string(),
+                notification: "you begin to squint your eyes open, seeing a dark forest.."
+                    .to_string(),
             }]));
         self.ecs.insert(UIConfig {
             highlight_discoveries: true,
