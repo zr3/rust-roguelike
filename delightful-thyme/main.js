@@ -21,3 +21,20 @@ document.getElementById('fullscreen-controls').addEventListener('click', () => {
         document.exitFullscreen();
     }
 });
+
+function triggerKey(id, key) {
+  document.getElementById(id).addEventListener('click', () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: key }));
+  });
+}
+
+triggerKey('gc-left', 'KeyH');
+triggerKey('gc-right', 'KeyL');
+triggerKey('gc-up', 'KeyK');
+triggerKey('gc-down', 'KeyJ');
+triggerKey('gc-interact', 'Space');
+triggerKey('gc-back', 'Backspace');
+triggerKey('gc-inventory', 'KeyI');
+triggerKey('gc-equipment', 'KeyE');
+triggerKey('gc-drop', 'KeyD');
+triggerKey('gc-scan', 'Enter');

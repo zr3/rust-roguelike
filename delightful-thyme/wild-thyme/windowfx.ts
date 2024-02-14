@@ -61,7 +61,10 @@ globalThis.windowfx = {
       // druid garden
       fetchNarration(stats, "garden");
     }
-    document.querySelector(':root').style.setProperty('--current-level', stats.level_stats.level + 1);
+    const root = document.querySelector(':root');
+    root.style.setProperty('--current-level', stats.level_stats.level + 1);
+    root.style.setProperty('--background-level-scale-vw', `${110 + (stats.level_stats.level * 10)}vw`);
+    root.style.setProperty('--background-level-scale-vh', `${110 + (stats.level_stats.level * 10)}vh`);
   },
   player_died: function player_died(
     deepest_level: number,
@@ -156,6 +159,10 @@ async function fetchNarration(
 }
 
 async function spellOutText(text: string) {
+  // calculate width based on mode (mobile/desktop)
+  // wider on mobile, since on desktop it's squished to the side
+  const linewidth = screen.width > 600 ? 30 : 60;
+  const linedelay = screen.width > 600 ? 1100 : 2200;
   // clear existing
   const topText = document.getElementById("top-text");
   if (!topText) {
@@ -164,10 +171,10 @@ async function spellOutText(text: string) {
   }
   topText.innerHTML = "";
   // split into 30-char wide lines
-  const lines = greedyLineBreak(30, text);
+  const lines = greedyLineBreak(linewidth, text);
   for (let line of lines) {
     topText.innerHTML += `<p class="intro-text type-animation">${line}</p>`;
-    await delay(1100);
+    await delay(linedelay);
     topText.lastElementChild?.classList.remove("type-animation");
   }
 }
@@ -213,6 +220,7 @@ async function intro() {
             required=""
             minlength="1"
             maxlength="10"
+            autocomplete="off"
           />
         </div>
 `;

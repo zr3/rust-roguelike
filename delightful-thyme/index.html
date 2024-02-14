@@ -34,21 +34,37 @@
         ></feDisplacementMap>
       </filter>
     </svg>
-    <section id="game-window">
-      <canvas id="canvas" width="1280" height="800"></canvas>
-    </section>
-    <section id="top-text" class="text-box">
-    </section>
-    <section id="input-window">
-    </section>
-    <section id="bottom-text" class="text-box hidden">
-      <p>[ARROW KEYS]/[UHJK] : move</p>
-      <p>[SPACE] : pick up, portal, interact on item you stand on</p>
-      <p>[I] : inventory</p>
-      <p>[D] : drop item on ground</p>
-      <p>[E] : remove (unwear/unwield) equipment</p>
-      <p>[ENTER] : see what is on the screen (scan all)</p>
-      <p>[MOUSE HOVER] : see what is on the screen (under mouse)</p>
+    <section id="game-layout">
+        <section id="game-window">
+          <canvas id="canvas" width="1280" height="800"></canvas>
+        </section>
+        <section id="top-text" class="text-box">
+        </section>
+        <section id="input-window">
+        </section>
+        <section id="bottom-text" class="text-box hidden">
+          <p>[ARROW KEYS]/[UHJK] : move</p>
+          <p>[SPACE] : pick up, portal, interact on item you stand on</p>
+          <p>[I] : inventory</p>
+          <p>[D] : drop item on ground</p>
+          <p>[E] : remove (unwear/unwield) equipment</p>
+          <p>[ENTER] : see what is on the screen (scan all)</p>
+          <p>[MOUSE HOVER] : see what is on the screen (under mouse)</p>
+        </section>
+        <div id="game-controls">
+            <div id="gc-button-pad">
+                <button id="gc-interact" class="gc-button">INTERACT</button>
+                <button id="gc-back" class="gc-button">BACK</button>
+                <button id="gc-up" class="gc-button gc-arrow">⬆</button>
+                <button id="gc-left" class="gc-button gc-arrow">⬅</button>
+                <button id="gc-right" class="gc-button gc-arrow">➡</button>
+                <button id="gc-down" class="gc-button gc-arrow">⬇</button>
+                <button id="gc-inventory" class="gc-button">I</button>
+                <button id="gc-equipment" class="gc-button">E</button>
+                <button id="gc-drop" class="gc-button">D</button>
+                <button id="gc-scan" class="gc-button">👁️</button>
+            </div>
+        </div>
     </section>
     <div id="fullscreen-controls" title="Toggle full screen">⛶</div>
     <script src="./wasm/and_we_had_a_wild_thyme.js"></script>
