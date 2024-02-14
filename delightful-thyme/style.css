@@ -237,7 +237,7 @@ body {
     }
     #game-controls {
         grid-area: 3 / 1 / 4 / 3;
-        padding: 12px;
+        padding: 2rem;
     }
 
     #gc-button-pad {
@@ -263,18 +263,29 @@ body {
         border: 1px dashed #aaa;
         border-radius: 5px;
         color: #aaa;
-        height: 60px;
-        margin: 6px;
+        height: 40px;
         font-family: "PC Senior", monospace;
+        margin: 2px;
         box-shadow: 5px 5px #aaa;
+        font-size: 0.5rem;
     }
-    .gc-button:hover {
-        box-shadow: 2px 2px #aaa;
-        margin-top: 9px;
-        left: 9px;
-    }
-    .gc-arrow {
-        font-size: 35px;
+    /* .gc-button:hover { */
+        /* animation: button-click 0.2s; */
+    /* } */
+    @keyframes button-click {
+        0% {
+            margin: 2px;
+            box-shadow: 5px 5px #aaa;
+        }
+        50% {
+            box-shadow: 2px 2px #aaa;
+            margin: 9px -1px -1px 9px;
+        }
+        100% {
+            margin: 2px;
+            box-shadow: 5px 5px #aaa;
+        }
     }
 }
+
 
