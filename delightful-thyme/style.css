@@ -1,7 +1,8 @@
 :root {
     --color-dark: #041725;
     --current-level: 1;
-    --background-level-scale: 100vw
+    --background-level-scale-vw: 110vw;
+    --background-level-scale-vh: 110vh;
 }
 html {
     background-color: var(--color-dark);
@@ -16,12 +17,10 @@ body {
 }
 
 #game-layout {
-    transition: all 3s ease-in-out;
+    transition: backdrop-filter 3s ease-in-out;
     backdrop-filter: brightness(calc(1 - var(--current-level) * 0.1));
     background-color: var(--color-dark);
     background-image: url('img/bg.avif');
-    max-width: 1800px;
-    margin: auto;
     width: 100vw;
     height: 100vh;
     display: grid;
@@ -147,7 +146,7 @@ body {
 }
 
 /* desktop-only layout */
-@media (min-width: 601px) {
+@media (min-width: 1001px) {
     html {
         font-size: 12px;
     }
@@ -201,8 +200,85 @@ body {
         cursor: pointer;
     }
 }
+/* mobile-wide layout */
+@media (min-width: 601px) and (max-width: 1000px) {
+    html {
+        font-size: 12px;
+    }
+    .type-animation {
+        width: 25ch;
+        animation: typing 1.1s steps(25);
+    }
+    #top-text {
+        position: relative;
+        font-size: 1rem;
+    }
+    #game-layout {
+        display: grid;
+        grid-template-columns: 1fr 26rem;
+        grid-template-rows: repeat(3, 1fr);
+        grid-column-gap: 0px;
+        grid-row-gap: 0px;
+        background-position: center;
+        background-size: var(--background-level-scale-vw);
+    }
+    #input-window {
+        grid-area: 1 / 1 / 4 / 2;
+    }
+    #game-window {
+        grid-area: 1 / 1 / 4 / 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    #top-text {
+        font-size: 0.8rem;
+        margin-top: 2rem;
+        grid-area: 1 / 2 / 3 / 3;
+        overflow-y: scroll;
+    }
+    #bottom-text {
+        display: none;
+    }
+    #joystick-container {
+        grid-area: 1 / 1 / 4 / 2;
+    }
+    #game-controls {
+        padding: 1rem;
+        grid-area: 3 / 2 / 4 / 3;
+    }
+    #gc-button-pad {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        /* grid-template-rows: repeat(5, 1fr); */
+        grid-column-gap: 0px;
+        grid-row-gap: 0px;
+    }
+    #gc-interact { grid-area: 1 / 1 / 2 / 3; }
+    #gc-back { grid-area: 1 / 4 / 2 / 6; }
+    #gc-inventory { grid-area: 2 / 1 / 3 / 2; }
+    #gc-equipment { grid-area: 2 / 2 / 3 / 3; }
+    #gc-drop { grid-area: 2 / 4 / 3 / 5; }
+    #gc-scan { grid-area: 2 / 5 / 3 / 6; }
+    #fullscreen-controls {
+        display: none;
+    }
+    
+    .gc-button {
+        background: transparent;
+        border: 1px dashed #aaa;
+        border-radius: 5px;
+        color: #aaa;
+        height: 40px;
+        font-family: "PC Senior", monospace;
+        margin: 2px;
+        box-shadow: 5px 5px #aaa;
+        font-size: 0.5rem;
+    }
+}
 
-/* mobile-only layout */
+/* mobile-tall layout */
 @media (max-width: 600px) {
     html {
         font-size: calc(5px + 1.3vh);
@@ -235,6 +311,9 @@ body {
     #fullscreen-controls {
         display: none;
     }
+    #joystick-container {
+        grid-area: 1 / 1 / 3 / 3;
+    }
     #game-controls {
         grid-area: 3 / 1 / 4 / 3;
         padding: 2rem;
@@ -243,20 +322,25 @@ body {
     #gc-button-pad {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        grid-template-rows: repeat(5, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        /* grid-template-rows: repeat(5, 1fr); */
         grid-column-gap: 0px;
         grid-row-gap: 0px;
     }
     #gc-interact { grid-area: 1 / 1 / 2 / 3; }
     #gc-back { grid-area: 1 / 4 / 2 / 6; }
-    #gc-up { grid-area: 2 / 3 / 3 / 4; }
-    #gc-left { grid-area: 3 / 2 / 4 / 3; }
-    #gc-right { grid-area: 3 / 4 / 4 / 5; }
-    #gc-down { grid-area: 4 / 3 / 5 / 4; }
-    #gc-inventory { grid-area: 5 / 1 / 6 / 2; }
-    #gc-equipment { grid-area: 5 / 2 / 6 / 3; }
-    #gc-drop { grid-area: 5 / 4 / 6 / 5; }
-    #gc-scan { grid-area: 5 / 5 / 6 / 6; }
+    /* #gc-up { grid-area: 2 / 3 / 3 / 4; } */
+    /* #gc-left { grid-area: 3 / 2 / 4 / 3; } */
+    /* #gc-right { grid-area: 3 / 4 / 4 / 5; } */
+    /* #gc-down { grid-area: 4 / 3 / 5 / 4; } */
+    /* #gc-inventory { grid-area: 5 / 1 / 6 / 2; } */
+    /* #gc-equipment { grid-area: 5 / 2 / 6 / 3; } */
+    /* #gc-drop { grid-area: 5 / 4 / 6 / 5; } */
+    /* #gc-scan { grid-area: 5 / 5 / 6 / 6; } */
+    #gc-inventory { grid-area: 2 / 1 / 3 / 2; }
+    #gc-equipment { grid-area: 2 / 2 / 3 / 3; }
+    #gc-drop { grid-area: 2 / 4 / 3 / 5; }
+    #gc-scan { grid-area: 2 / 5 / 3 / 6; }
 
     .gc-button {
         background: transparent;
